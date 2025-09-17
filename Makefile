@@ -56,13 +56,7 @@ examples: clean
 	done
 
 examples-full: clean
-	@for i in examples/*/*.py; do \
-		echo "-----------------------------------------------"; \
-		echo $$i; \
-		echo "-----------------------------------------------"; \
-		python $$i --visbrain-show=False; \
-		echo "\n"; \
-	done
+	@for i in examples/*/*.py; do echo "-----------------------------------------------"; echo $$i; echo "-----------------------------------------------"; python $$i --visbrain-show=False; echo "\n"; done
 
 pypi: build_dist
 	@twine upload --verbose dist/*
