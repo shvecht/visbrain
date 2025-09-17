@@ -1,4 +1,5 @@
-# Development environment for Visbrain modernization work.
+# Development environment for Visbrain's modernization work.
+# Extends the runtime pins with tooling for linting, testing, and packaging.
 # Includes linting, testing, and packaging utilities.
 
 -r base.txt

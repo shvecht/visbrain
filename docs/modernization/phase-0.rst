@@ -52,7 +52,6 @@ Next steps
 ----------
 
 * Track early compatibility issues with PySide6 and Qt 6 APIs while preparing
-  the Phase 1 packaging migration.
 * Document environment quirks as they surface so future contributors have
   up-to-date guidance.
 * Begin auditing modules that rely on deprecated PyQt5-only behavior in

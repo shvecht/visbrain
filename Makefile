@@ -26,11 +26,10 @@ clean-test: clean-build clean-pyc clean-ctags clean-cache
 	@echo "Cleaning build, pyc, ctags, and cache"
 
 test: clean-test
-	@python setup.py test
-	@coverage report
+	@python -m pytest --cov=visbrain --cov-report=term-missing
 
 test-html: clean-test
-	@py.test --cov-report html --showlocals --durations=10 --html=report.html --self-contained-html
+	@python -m pytest --cov=visbrain --cov-report=html --showlocals --durations=10 --html=report.html --self-contained-html
 
 flake: clean-test
 	@flake8
@@ -53,14 +52,12 @@ examples-full: clean
 		echo "\n"; \
 	done
 
-pypi:
-	@python setup.py register -r pypi
-	@python setup.py sdist upload -r pypi
+pypi: build_dist
+	@twine upload --verbose dist/*
 
 
 # clean dist
 clean_dist:
-	@rm -rf build/
 	@rm -rf build/
 	@rm -rf visbrain.egg-info/
 	@rm -rf dist/
@@ -68,8 +65,7 @@ clean_dist:
 
 # build dist
 build_dist: clean_dist
-	python setup.py sdist
-	python setup.py bdist_wheel
+	python -m build
 	@echo "Dist built"
 
 # check distribution
@@ -77,5 +73,5 @@ check_dist:
 	twine check dist/*
 
 # upload distribution
-upload_dist:
+upload_dist: build_dist
 	twine upload --verbose dist/*

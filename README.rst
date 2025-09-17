@@ -65,13 +65,13 @@ Dependencies
 
 Visbrain requires :
 
-* NumPy >= 1.13
-* SciPy
-* VisPy >= 0.5.3
-* Matplotlib >= 1.5.5
-* PyQt5
-* Pillow
-* PyOpenGL
+* NumPy >= 1.23
+* SciPy >= 1.9
+* VisPy >= 0.12
+* Matplotlib >= 3.6
+* PyQt5 >= 5.15
+* Pillow >= 9.5
+* PyOpenGL >= 3.1.6
 
 User installation
 +++++++++++++++++

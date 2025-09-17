@@ -49,12 +49,12 @@ Installation options
 Dependencies
 ------------
 
-* NumPy and SciPy (>= 1.13)
-* Matplotlib (>= 1.5.5)
-* VisPy (>= 0.5.3)
-* PyQt5
-* PyOpenGL
-* Pillow
+* NumPy (>= 1.23) and SciPy (>= 1.9)
+* Matplotlib (>= 3.6)
+* VisPy (>= 0.12)
+* PyQt5 (>= 5.15)
+* PyOpenGL (>= 3.1.6)
+* Pillow (>= 9.5)
 
 Optional dependencies
 ---------------------
@@ -85,7 +85,7 @@ If you want to install visbrain in develop mode :
 
     git clone https://github.com/EtienneCmb/visbrain.git visbrain/
     cd visbrain/
-    python setup.py develop 
+    python -m pip install -e .
 
 From here you can switch to the latest features using :
 
