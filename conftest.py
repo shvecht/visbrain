@@ -80,7 +80,9 @@ def _is_under(path: Path, parents: Iterable[Path]) -> bool:
     return False
 
 
-def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+def pytest_collection_modifyitems(
+    config: pytest.Config, items: list[pytest.Item]
+) -> None:
     """Mark tests under GUI-specific paths with the ``gui`` marker."""
     for item in items:
         item_path = Path(str(item.fspath)).resolve()

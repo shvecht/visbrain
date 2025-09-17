@@ -9,7 +9,7 @@ current Python toolchains. The guiding principles are:
 
 * publish metadata through ``pyproject.toml`` rather than ``setup.py``;
 * raise dependency floors to versions that support Python 3.9+; and
-* keep the legacy PyQt5 runtime working until the Qt 6 port lands.
+* codify PySide6 as the supported Qt binding across packaging inputs.
 
 Key changes
 -----------
@@ -20,10 +20,10 @@ past ``setup.py`` options, and declares a modern Python range. ``setup.py`` is
 retained as a thin shim so existing workflows that call ``python setup.py``
 continue to function.
 
-The pinned requirement files were refreshed to align with the metadata. PyQt5
-5.15.x remains in place for runtime compatibility, while the optional extras are
-ready for the eventual Qt 6 migration. ``MANIFEST.in`` will continue to ship the
-resource files consumed at runtime.
+The pinned requirement files were refreshed to align with the metadata. PySide6
+and its companion ``shiboken6`` package anchor the runtime stack, while the
+optional extras mirror the ``pyproject.toml`` extras. ``MANIFEST.in`` will
+continue to ship the resource files consumed at runtime.
 
 Developer workflow
 ------------------
@@ -45,7 +45,7 @@ Next steps
 
 * Convert continuous integration workflows to rely on ``pyproject.toml`` so
   future jobs no longer invoke ``setup.py`` directly.
-* Begin extracting Qt-bound logic into dedicated adapters so Phase 2 can add a
-  PySide6-backed implementation without breaking PyQt5 users.
+* Begin extracting Qt-bound logic into dedicated adapters so Phase 2 can
+  standardize on PySide6-friendly abstractions.
 * Audit package data requirements and move any implicit resources into explicit
   ``tool.setuptools.package-data`` declarations.

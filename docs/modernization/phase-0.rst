@@ -23,7 +23,9 @@ remaining realistic for the team to test:
   x86_64), and Ubuntu 22.04 LTS or newer.
 * **Qt binding**: PySide6 is adopted as the official GUI backend. It ships
   wheels for all target platforms, has an LGPL-friendly license, and maps
-  closely onto Qt 6 API expectations.
+  closely onto Qt 6 API expectations. Shipping with the Qt 6 stack keeps the
+  modernization roadmap focused on the end-state platform rather than
+  maintaining compatibility shims for PyQt5.
 
 These targets will guide dependency minimums, CI matrices, and documentation
 updates in later phases.
@@ -54,5 +56,5 @@ Next steps
 * Track early compatibility issues with PySide6 and Qt 6 APIs while preparing
 * Document environment quirks as they surface so future contributors have
   up-to-date guidance.
-* Begin auditing modules that rely on deprecated PyQt5-only behavior in
-  preparation for Phase 2 refactors.
+* Begin auditing modules that rely on PyQt5-only behavior so they can be
+  replaced with PySide6-compatible patterns ahead of Phase 2 refactors.
