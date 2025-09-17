@@ -1,7 +1,7 @@
 # simple makefile to simplify repetetive build env management tasks under posix
 CTAGS ?= ctags
 
-all: clean inplace test-nongui
+all: clean inplace test
 
 inplace:
 	@python -m pip install -e .
