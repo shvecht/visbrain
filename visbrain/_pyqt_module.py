@@ -1,13 +1,13 @@
 """All visbrain modules based on PyQt5 should inherit from _PyQtModule."""
-import os
-import sip
-
-from PyQt5 import QtGui
 import logging
+from importlib import resources
+
+import sip
+from PyQt5 import QtGui
 
 from .utils import set_widget_size, set_log_level
 from .config import PROFILER, CONFIG
-from .io import (path_to_tmp, download_file, clean_tmp, path_to_visbrain_data)
+from .io import path_to_tmp, clean_tmp, path_to_visbrain_data
 
 sip.setdestroyonexit(False)
 logger = logging.getLogger('visbrain')
@@ -83,15 +83,22 @@ class _PyQtModule(object):
             self.QuickSettings.setCurrentIndex(0)
         # Set icon (if possible) :
         if isinstance(self._module_icon, str):
-            path_ico = path_to_visbrain_data(self._module_icon, 'icons')
-            if not os.path.isfile(path_ico):
-                download_file(self._module_icon, astype='icons')
-            if os.path.isfile(path_ico):
-                app_icon = QtGui.QIcon()
-                app_icon.addFile(path_ico)
-                self.setWindowIcon(app_icon)
-            else:  # don't crash just for an icon...
-                logger.debug("No icon found (%s)" % self._module_icon)
+            try:
+                icon_resource = resources.files("visbrain.resources.icons")
+            except ModuleNotFoundError:  # pragma: no cover - packaging error
+                logger.debug("Icon package missing for %s", self._module_icon)
+            else:
+                icon_path = icon_resource.joinpath(self._module_icon)
+                if icon_path.is_file():
+                    try:
+                        with resources.as_file(icon_path) as icon_file:
+                            app_icon = QtGui.QIcon()
+                            app_icon.addFile(str(icon_file))
+                            self.setWindowIcon(app_icon)
+                    except FileNotFoundError:  # pragma: no cover - zip importer
+                        logger.debug("No icon found (%s)" % self._module_icon)
+                else:  # don't crash just for an icon...
+                    logger.debug("No icon found (%s)" % self._module_icon)
         else:
             logger.debug("No icon passed as an input.")
         # Tree description if log level is on debug :

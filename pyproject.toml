@@ -76,7 +76,10 @@ include-package-data = true
 include = ["visbrain", "visbrain.*"]
 
 [tool.setuptools.package-data]
-visbrain = ["data_url.json"]
+visbrain = [
+    "data_url.json",
+    "resources/icons/*.svg",
+]
 
 [tool.setuptools.dynamic]
 version = {attr = "visbrain.__version__"}
