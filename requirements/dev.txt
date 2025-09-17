@@ -1,6 +1,5 @@
 # Development environment for Visbrain's modernization work.
 # Extends the runtime pins with tooling for linting, testing, and packaging.
-# Includes linting, testing, and packaging utilities.
 
 -r base.txt
 
@@ -11,6 +10,5 @@ pip-tools==7.4.1
 pytest==8.2.2
 pytest-cov==5.0.0
 pytest-qt==4.4.0
-flake8==7.1.1
 ruff==0.4.5
 twine==5.1.0

@@ -79,3 +79,21 @@ visbrain = ["data_url.json"]
 
 [tool.setuptools.dynamic]
 version = {attr = "visbrain.__version__"}
+
+[tool.ruff]
+target-version = "py39"
+extend-exclude = [
+    "docs",
+    "old",
+    "build",
+    "dist",
+    "__init__.py",
+    "examples",
+    "*_gui.py",
+    "*Gui.py",
+    "setup.py",
+]
+
+[tool.ruff.lint]
+select = ["E", "F"]
+ignore = ["E722", "E741", "F632"]

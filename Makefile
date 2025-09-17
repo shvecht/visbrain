@@ -1,7 +1,7 @@
 # simple makefile to simplify repetetive build env management tasks under posix
 CTAGS ?= ctags
 
-all: clean inplace test
+all: clean test
 
 inplace:
 	@python -m pip install -e .
@@ -44,7 +44,7 @@ test-html: clean-test
 	@python -m pytest --cov=visbrain --cov-report=html --showlocals --durations=10 --html=report.html --self-contained-html
 
 flake: clean-test
-	@flake8
+	@ruff check .
 
 examples: clean
 	@for i in examples/brain/*.py examples/objects/*.py;do \

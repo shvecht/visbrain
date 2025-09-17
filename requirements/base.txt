@@ -1,8 +1,5 @@
 # Runtime dependencies validated for the Phase 1 packaging migration.
 # The Qt stack remains on PyQt5 until the GUI layer is ported to Qt 6 APIs.
-=======
-# Runtime dependencies validated for Phase 0 modernization work.
-# These pins will evolve alongside the Phase 1 packaging migration.
 
 numpy==1.26.4
 scipy==1.11.4
