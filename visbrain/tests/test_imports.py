@@ -1,5 +1,7 @@
 """Test modules importation."""
 
+import pytest
+
 
 def test_import_matplotlib():
     """Import matplotlib."""
@@ -16,26 +18,31 @@ def test_import_scipy():
     import scipy  # noqa
 
 
+@pytest.mark.gui
 def test_import_pyqt():
     """Import PyQt."""
     import PyQt5  # noqa
 
 
+@pytest.mark.gui
 def test_import_brain():
     """Import the Brain module.."""
     from visbrain.gui import Brain  # noqa
 
 
+@pytest.mark.gui
 def test_import_sleep():
     """Import the Sleep module.."""
     from visbrain.gui import Sleep  # noqa
 
 
+@pytest.mark.gui
 def test_import_signal():
     """Import the Signal module.."""
     from visbrain.gui import Signal  # noqa
 
 
+@pytest.mark.gui
 def test_import_figure():
     """Import the Figure module.."""
     from visbrain.gui import Figure  # noqa
