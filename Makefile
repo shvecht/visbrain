@@ -3,6 +3,11 @@ CTAGS ?= ctags
 
 all: clean inplace test
 
+inplace:
+	@python -m pip install -e .
+	@python -c 'from pathlib import Path; import subprocess, sys; exec("""from pathlib import Path\nimport subprocess\nimport sys\nrequirements = []\nfor line in Path(\"requirements/base.txt\").read_text().splitlines():\n    line = line.strip()\n    if not line or line.startswith(\"#\") or set(line) == {\"=\"}:\n        continue\n    requirements.append(line)\nif requirements:\n    subprocess.check_call([sys.executable, \"-m\", \"pip\", \"install\", *requirements])\n""")'
+	@python -m pip install setuptools pytest pytest-cov
+
 clean-pyc:
 	@find . -name "*.pyc" | xargs rm -f
 
