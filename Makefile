@@ -1,7 +1,7 @@
 # simple makefile to simplify repetetive build env management tasks under posix
 CTAGS ?= ctags
 
-all: clean inplace test
+all: clean inplace test-nongui
 
 inplace:
 	@python -m pip install -e .
@@ -30,8 +30,15 @@ clean: clean-build clean-pyc clean-so clean-ctags clean-cache
 clean-test: clean-build clean-pyc clean-ctags clean-cache
 	@echo "Cleaning build, pyc, ctags, and cache"
 
-test: clean-test
-	@python -m pytest --cov=visbrain --cov-report=term-missing
+test: test-nongui
+
+test-nongui: clean-test
+	@QT_QPA_PLATFORM=offscreen PYTHONWARNINGS=default \
+	        python -m pytest -m "not gui" --cov=visbrain --cov-report=term-missing
+
+test-gui:
+	@QT_QPA_PLATFORM=offscreen PYTHONWARNINGS=default \
+	        python -m pytest -m gui --cov=visbrain --cov-report=term-missing --cov-append
 
 test-html: clean-test
 	@python -m pytest --cov=visbrain --cov-report=html --showlocals --durations=10 --html=report.html --self-contained-html
