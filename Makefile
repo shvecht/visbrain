@@ -44,7 +44,7 @@ examples: clean
 	done
 
 examples-full: clean
-	@for i in @for i in examples/*/*.py;do \
+	@for i in examples/*/*.py; do \
 		echo "-----------------------------------------------"; \
 		echo $$i; \
 		echo "-----------------------------------------------"; \
