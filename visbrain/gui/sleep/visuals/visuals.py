@@ -335,10 +335,10 @@ class ChannelPlot(PrepareData):
                     [to_chan], :].copy(), time_sl)
 
         # Set data to each plot :
-        for l, (i, k) in enumerate(self):
+        for idx, (i, k) in enumerate(self):
             # ________ MAIN DATA ________
             # Select channel ;
-            datchan = data_sl[l, :]
+            datchan = data_sl[idx, :]
 
             # Concatenate time / data / z axis :
             dat = np.vstack((time_sl, datchan, z)).T
@@ -957,7 +957,7 @@ class CanvasShortcuts(object):
         # Add shortcuts to vbCanvas :
         @canvas.events.key_press.connect
         def on_key_press(event):
-            """Executed function when a key is pressed on a keyboard over canvas.
+            """Handle keyboard input routed to the Sleep canvas.
 
             :event: the trigger event
             """

@@ -51,7 +51,7 @@ class BrainShortcuts(object):
         # Add shortcuts to BrainCanvas :
         @canvas.events.key_press.connect
         def on_key_press(event):
-            """Executed function when a key is pressed on a keyboard over Brain canvas.
+            """Handle keyboard input that targets the Brain canvas.
 
             :event: the trigger event
             """
