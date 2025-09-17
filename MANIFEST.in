@@ -6,3 +6,6 @@ include requirements/dev.txt
 
 # Add url path :
 include visbrain/data_url.json
+
+# Include packaged GUI assets
+recursive-include visbrain/resources/icons *.svg
