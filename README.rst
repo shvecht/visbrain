@@ -28,6 +28,27 @@ Visbrain
 
 **Visbrain** is an open-source python 3 package dedicated to brain signals visualization. It is based on top of `VisPy <http://vispy.org/>`_ and PyQt and is distributed under the 3-Clause BSD license. We also provide an on line `documentation <http://visbrain.org>`_, `examples and datasets <http://visbrain.org/auto_examples/>`_ and can also be downloaded from `PyPi <https://pypi.python.org/pypi/visbrain/>`_.
 
+Modernization roadmap
+---------------------
+
+Visbrain is currently undergoing a multi-phase modernization effort. Phase 0
+has established the target execution environments and the development workflow
+used by contributors while the code base is updated. The detailed plan lives in
+``docs/modernization/phase-0.rst`` within the repository.
+
+For day-to-day development work on this modernization track we recommend
+creating a virtual environment that matches the Phase 0 baseline:
+
+.. code-block:: console
+
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows use .venv\\Scripts\\activate
+   python -m pip install --upgrade pip
+   pip install -r requirements/dev.txt
+
+These pins align with Python 3.9–3.12 on Windows, macOS, and Linux and will be
+revisited during the packaging overhaul in Phase 1.
+
 Important links
 ---------------
 
@@ -44,13 +65,13 @@ Dependencies
 
 Visbrain requires :
 
-* NumPy >= 1.13
-* SciPy
-* VisPy >= 0.5.3
-* Matplotlib >= 1.5.5
-* PyQt5
-* Pillow
-* PyOpenGL
+* NumPy >= 1.23
+* SciPy >= 1.9
+* VisPy >= 0.12
+* Matplotlib >= 3.6
+* PyQt5 >= 5.15
+* Pillow >= 9.5
+* PyOpenGL >= 3.1.6
 
 User installation
 +++++++++++++++++

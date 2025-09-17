@@ -1,0 +1,81 @@
+[build-system]
+requires = [
+    "setuptools>=68",
+    "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "visbrain"
+dynamic = ["version"]
+description = "Hardware-accelerated visualization suite for brain-data in Python"
+readme = { file = "README.rst", content-type = "text/x-rst" }
+requires-python = ">=3.9"
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Visbrain developers" },
+]
+maintainers = [
+    { name = "Etienne Combrisson", email = "e.combrisson@gmail.com" },
+]
+keywords = [
+    "brain",
+    "MNI",
+    "GPU",
+    "visualization",
+    "OpenGL",
+    "vispy",
+    "neuroscience",
+    "sleep",
+    "data-mining",
+]
+dependencies = [
+    "numpy>=1.23",
+    "scipy>=1.9",
+    "vispy>=0.12",
+    "matplotlib>=3.6",
+    "PyQt5>=5.15",
+    "pillow>=9.5",
+    "PyOpenGL>=3.1.6",
+]
+
+[project.optional-dependencies]
+full = [
+    "mne>=1.3",
+    "tensorpac>=0.6",
+    "pandas>=1.5",
+    "xlrd>=2.0",
+    "scikit-image>=0.20",
+    "nibabel>=5.0",
+    "imageio>=2.27",
+]
+sleep = [
+    "mne>=1.3",
+    "tensorpac>=0.6",
+]
+roi = [
+    "pandas>=1.5",
+    "xlrd>=2.0",
+]
+topo = [
+    "scikit-image>=0.20",
+]
+
+[project.urls]
+Homepage = "https://visbrain.org"
+Documentation = "https://visbrain.org"
+Repository = "https://github.com/EtienneCmb/visbrain"
+"Issue Tracker" = "https://github.com/EtienneCmb/visbrain/issues"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["visbrain", "visbrain.*"]
+
+[tool.setuptools.package-data]
+visbrain = ["data_url.json"]
+
+[tool.setuptools.dynamic]
+version = {attr = "visbrain.__version__"}
