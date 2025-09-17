@@ -493,7 +493,7 @@ class UiPanels(object):
 
     def _fcn_set_hypno_color(self):
         """Change the color of the hypnogram."""
-        if not(self._PanHypnoColor.isChecked()):
+        if not self._PanHypnoColor.isChecked():
             color = {-1: '#292824', 0: '#292824', 1: '#292824',
                      2: '#292824', 3: '#292824', 4: '#292824'}
         else:
