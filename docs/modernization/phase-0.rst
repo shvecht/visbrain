@@ -21,9 +21,9 @@ remaining realistic for the team to test:
 * **Python**: 3.9 through 3.12 (dropping 3.8 keeps pace with NumPy/Qt support).
 * **Operating systems**: Windows 10/11, macOS 12 Monterey or newer (arm64 and
   x86_64), and Ubuntu 22.04 LTS or newer.
-* **Qt binding**: PySide6 remains the long-term target, but the interim
-  requirements stick with PyQt5 5.15.x so the legacy widgets continue to work
-  while the Qt 6 port proceeds.
+* **Qt binding**: PySide6 is adopted as the official GUI backend. It ships
+  wheels for all target platforms, has an LGPL-friendly license, and maps
+  closely onto Qt 6 API expectations.
 
 These targets will guide dependency minimums, CI matrices, and documentation
 updates in later phases.
@@ -52,7 +52,6 @@ Next steps
 ----------
 
 * Track early compatibility issues with PySide6 and Qt 6 APIs while preparing
-  the Phase 1 packaging migration and keeping the PyQt5 bridge healthy.
 * Document environment quirks as they surface so future contributors have
   up-to-date guidance.
 * Begin auditing modules that rely on deprecated PyQt5-only behavior in
