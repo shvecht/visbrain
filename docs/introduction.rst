@@ -52,7 +52,7 @@ Dependencies
 * NumPy (>= 1.23) and SciPy (>= 1.9)
 * Matplotlib (>= 3.6)
 * VisPy (>= 0.12)
-* PyQt5 (>= 5.15)
+* PySide6 (>= 6.7) and ``shiboken6``
 * PyOpenGL (>= 3.1.6)
 * Pillow (>= 9.5)
 

@@ -1,12 +1,10 @@
 # Runtime dependencies validated for the Phase 1 packaging migration.
-# The Qt stack remains on PyQt5 until the GUI layer is ported to Qt 6 APIs.
+# The Qt stack now targets PySide6 to match the modernization baseline.
 
 numpy==1.26.4
 scipy==1.11.4
 matplotlib==3.8.4
 vispy==0.13.0
-PyQt5==5.15.10
-=======
 PySide6==6.7.1
 shiboken6==6.7.1
 pillow==10.3.0
