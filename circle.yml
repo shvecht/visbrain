@@ -65,7 +65,7 @@ jobs:
             name: Install visbrain
             command: |
               source activate testenv;
-              python setup.py develop;
+              pip install -e .;
         - run:
             name: Run the tests
             command: |

@@ -65,3 +65,5 @@ Contents
    community
    release
    citation
+   modernization/phase-0
+   modernization/phase-1
