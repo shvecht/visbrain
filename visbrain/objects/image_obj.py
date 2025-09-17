@@ -111,8 +111,11 @@ class ImageObj(VisbrainObject):
             if any([k > self._n_limit for k in data.shape]):
                 dsf_x = max(1, int(np.round(data.shape[0] / self._n_limit)))
                 dsf_y = max(1, int(np.round(data.shape[1] / self._n_limit)))
-                logger.debug("Image size reduced along the x and y-axis with "
-                             "a down-sampling factor of %s" % ([dsf_x, dsf_y]))
+                logger.debug(
+                    "Image size reduced along the x and y-axis with a "
+                    "down-sampling factor of %s",
+                    [dsf_x, dsf_y],
+                )
                 data = data[::dsf_x, ::dsf_y]
                 xaxis, yaxis = xaxis[::dsf_x], yaxis[::dsf_y]
             # Set properties :

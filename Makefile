@@ -3,6 +3,11 @@ CTAGS ?= ctags
 
 all: clean test
 
+inplace:
+	@python -m pip install -e .
+	@python -c 'from pathlib import Path; import subprocess, sys; exec("""from pathlib import Path\nimport subprocess\nimport sys\nrequirements = []\nfor line in Path(\"requirements/base.txt\").read_text().splitlines():\n    line = line.strip()\n    if not line or line.startswith(\"#\") or set(line) == {\"=\"}:\n        continue\n    requirements.append(line)\nif requirements:\n    subprocess.check_call([sys.executable, \"-m\", \"pip\", \"install\", *requirements])\n""")'
+	@python -m pip install setuptools pytest pytest-cov
+
 clean-pyc:
 	@find . -name "*.pyc" | xargs rm -f
 
@@ -25,8 +30,15 @@ clean: clean-build clean-pyc clean-so clean-ctags clean-cache
 clean-test: clean-build clean-pyc clean-ctags clean-cache
 	@echo "Cleaning build, pyc, ctags, and cache"
 
-test: clean-test
-	@python -m pytest --cov=visbrain --cov-report=term-missing
+test: test-nongui
+
+test-nongui: clean-test
+	@QT_QPA_PLATFORM=offscreen PYTHONWARNINGS=default \
+	        python -m pytest -m "not gui" --cov=visbrain --cov-report=term-missing
+
+test-gui:
+	@QT_QPA_PLATFORM=offscreen PYTHONWARNINGS=default \
+	        python -m pytest -m gui --cov=visbrain --cov-report=term-missing --cov-append
 
 test-html: clean-test
 	@python -m pytest --cov=visbrain --cov-report=html --showlocals --durations=10 --html=report.html --self-contained-html
@@ -44,13 +56,7 @@ examples: clean
 	done
 
 examples-full: clean
-	@for i in examples/*/*.py; do \
-		echo "-----------------------------------------------"; \
-		echo $$i; \
-		echo "-----------------------------------------------"; \
-		python $$i --visbrain-show=False; \
-		echo "\n"; \
-	done
+	@for i in examples/*/*.py; do echo "-----------------------------------------------"; echo $$i; echo "-----------------------------------------------"; python $$i --visbrain-show=False; echo "\n"; done
 
 pypi: build_dist
 	@twine upload --verbose dist/*
