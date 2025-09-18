@@ -9,7 +9,7 @@ from ..io import write_fig_canvas, mpl_preview, dialog_save
 from ..qt import QtWidgets
 from ..utils import color2vb, set_log_level, rotate_turntable, FixedCam
 from ..visuals import CbarVisual
-from ..config import CONFIG, PROFILER
+from ..config import CONFIG, PROFILER, get_vispy_app
 
 logger = logging.getLogger('visbrain')
 
@@ -692,4 +692,4 @@ class SceneObj(object):
                 logger.profiler(" ")
                 PROFILER.finish()
             if sys.flags.interactive != 1 and CONFIG['SHOW_PYQT_APP']:
-                CONFIG['VISPY_APP'].run()
+                get_vispy_app().run()

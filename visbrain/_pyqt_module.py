@@ -24,7 +24,7 @@ except ImportError:  # pragma: no cover - shiboken missing
     shiboken6 = None
 
 from .utils import set_widget_size, set_log_level
-from .config import PROFILER, CONFIG
+from .config import CONFIG, PROFILER, get_qt_app, get_vispy_app
 from .io import path_to_tmp, clean_tmp, path_to_visbrain_data
 
 logger = logging.getLogger('visbrain')
@@ -114,7 +114,7 @@ class _PyQtModule(object):
         """Display the graphical user interface."""
         # Fixed size for the settings panel :
         if hasattr(self, 'q_widget'):
-            set_widget_size(CONFIG['PYQT_APP'], self.q_widget, 23)
+            set_widget_size(get_qt_app(), self.q_widget, 23)
             self.q_widget.setVisible(self._show_settings)
         # Force the quick settings tab to be on the first tab :
         if hasattr(self, 'QuickSettings'):
@@ -150,11 +150,13 @@ class _PyQtModule(object):
         # If PyQt GUI :
         if CONFIG['SHOW_PYQT_APP']:
             self.showMaximized()
-            CONFIG['VISPY_APP'].run()
+            get_vispy_app().run()
         # Finally clean the tmp folder :
         self._clean_tmp_folder()
 
     def closeEvent(self, event):  # noqa
         """Executed method when the GUI closed."""
-        CONFIG['PYQT_APP'].quit()
+        app = get_qt_app(create=False)
+        if app is not None:
+            app.quit()
         logger.debug("App closed.")

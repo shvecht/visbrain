@@ -19,7 +19,7 @@ from ..io import (
 )
 from ..qt import QtWidgets
 from ..utils import color2vb, set_log_level, merge_cameras
-from ..config import CONFIG
+from ..config import CONFIG, get_vispy_app
 from ..visuals import CbarBase
 
 logger = logging.getLogger('visbrain')
@@ -240,7 +240,7 @@ class VisbrainObject(_VisbrainObj):
                 vispy.scene.visuals.XYZAxis(parent=canvas.wc.scene)
             # view.camera = camera
             if (sys.flags.interactive != 1) and show:
-                CONFIG['VISPY_APP'].run()
+                get_vispy_app().run()
             # Reset orignial parent :
             self._node.parent = parent_bck
 
@@ -268,7 +268,7 @@ class VisbrainObject(_VisbrainObj):
         def on_timer(*args, **kwargs):  # noqa
             if hasattr(self, 'camera'):
                 self.camera.azimuth += step  # noqa
-        kw = dict(connect=on_timer, app=CONFIG['VISPY_APP'],
+        kw = dict(connect=on_timer, app=get_vispy_app(),
                   interval=interval, iterations=iterations)
         self._app_timer = Timer(**kw)
         self._app_timer.start()

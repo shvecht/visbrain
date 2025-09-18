@@ -1,13 +1,16 @@
 """Visbrain configurations."""
-import sys
+from __future__ import annotations
+
 import getopt
 import logging
+import sys
+from typing import Optional
 
 from vispy import app as visapp
 
-from visbrain.utils.others import Profiler
 from visbrain.utils.logging import set_log_level
-from .qt import QtWidgets, QT_API
+from visbrain.utils.others import Profiler
+from .qt import QT_API, QtWidgets
 
 
 # Set 'info' as the default logging level
@@ -15,30 +18,69 @@ logger = logging.getLogger('visbrain')
 set_log_level('info')
 
 # Configuration dict
-CONFIG = {}
+CONFIG: dict[str, object] = {}
 
 # Visbrain profiler (derived from the VisPy profiler)
 PROFILER = Profiler()
 
-# Qt application
-PYQT_APP = QtWidgets.QApplication.instance()
-if PYQT_APP is None:
-    PYQT_APP = QtWidgets.QApplication([''])
-CONFIG['PYQT_APP'] = PYQT_APP
-CONFIG['SHOW_PYQT_APP'] = True
+# Lazily created application instances
+_QT_APP: Optional[QtWidgets.QApplication] = None
+_VISPY_APP: Optional[visapp.Application] = None
 
-# VisPy application
-VISPY_BACKEND = QT_API.lower() if QT_API else None
-CONFIG['VISPY_BACKEND'] = VISPY_BACKEND
-CONFIG['VISPY_APP'] = visapp.application.Application(VISPY_BACKEND)
+# Backend metadata
 CONFIG['QT_API'] = QT_API
+CONFIG['VISPY_BACKEND'] = QT_API.lower() if QT_API else None
+CONFIG['SHOW_PYQT_APP'] = True
+CONFIG['PYQT_APP'] = None
+CONFIG['VISPY_APP'] = None
+
+
+def get_qt_app(create: bool = True) -> Optional[QtWidgets.QApplication]:
+    """Return the active :class:`~QtWidgets.QApplication` instance.
+
+    Parameters
+    ----------
+    create : bool
+        When ``True`` (the default) a new :class:`~QtWidgets.QApplication`
+        instance is created if none exists. When ``False`` the function returns
+        ``None`` if a Qt application has not been created yet.
+    """
+
+    global _QT_APP
+
+    app = QtWidgets.QApplication.instance()
+    if app is None and create:
+        app = QtWidgets.QApplication([''])
+
+    if app is not None:
+        _QT_APP = app
+        CONFIG['PYQT_APP'] = app
+    return app
+
+
+def get_vispy_app(backend: Optional[str] = None) -> visapp.Application:
+    """Return the global :class:`vispy.app.Application` instance."""
+
+    global _VISPY_APP
+
+    if backend is not None:
+        use_app(backend)
+
+    if _VISPY_APP is None:
+        backend_name = CONFIG.get('VISPY_BACKEND')
+        _VISPY_APP = visapp.application.Application(backend_name)
+        CONFIG['VISPY_APP'] = _VISPY_APP
+    return _VISPY_APP
 
 
 def use_app(backend_name):
     """Use a specific backend."""
     backend = backend_name.lower() if isinstance(backend_name, str) else backend_name
     CONFIG['VISPY_BACKEND'] = backend
-    CONFIG['VISPY_APP'] = visapp.application.Application(backend)
+    global _VISPY_APP
+    _VISPY_APP = visapp.application.Application(backend)
+    CONFIG['VISPY_APP'] = _VISPY_APP
+    return _VISPY_APP
 
 
 # MPL render :
@@ -49,7 +91,8 @@ try:
     ip = get_ipython()
     CONFIG['MPL_RENDER'] = True
     import vispy
-    vispy.use(VISPY_BACKEND)
+
+    vispy.use(CONFIG['VISPY_BACKEND'])
 except NameError:
     pass
 
