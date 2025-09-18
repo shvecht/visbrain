@@ -1,17 +1,31 @@
 """Usefull functions for graphical interface managment."""
 
-from PyQt5 import QtCore
+from ..qt import QtCore, QtGui, QtWidgets
 
 import numpy as np
 
 from .color import color2vb, color2tuple
 
-__all__ = ('slider2opacity', 'textline2color', 'color2json',
-           'ndsubplot', 'combo', 'is_color', 'MouseEventControl',
-           'disconnect_all', 'extend_combo_list', 'get_combo_list_index',
-           'safely_set_cbox', 'safely_set_spin', 'safely_set_slider',
-           'toggle_enable_tab', 'get_screen_size', 'set_widget_size',
-           'fill_pyqt_table')
+__all__ = (
+    'slider2opacity',
+    'textline2color',
+    'color2json',
+    'ndsubplot',
+    'combo',
+    'is_color',
+    'MouseEventControl',
+    'disconnect_all',
+    'extend_combo_list',
+    'get_combo_list_index',
+    'safely_set_cbox',
+    'safely_set_spin',
+    'safely_set_slider',
+    'toggle_enable_tab',
+    'get_screen_size',
+    'set_widget_size',
+    'fill_qt_table',
+    'fill_pyqt_table',
+)
 
 
 def slider2opacity(value, thmin=0.0, thmax=100.0, vmin=-5.0, vmax=105.0,
@@ -82,8 +96,8 @@ def color2json(obj, rmalpha=True):
 
     Parameters
     ----------
-    obj : PyQt textline object
-        The PyQt text line object.
+    obj : Qt textline object
+        The Qt text line object.
     rmalpha : bool | True
         Specify if the alpha component have to be deleted.
 
@@ -231,12 +245,12 @@ class MouseEventControl(object):
 
 
 def disconnect_all(obj):
-    """Disconnect all functions related to an PyQt object.
+    """Disconnect all functions related to a Qt object.
 
     Parameters
     ----------
-    obj : PyQt object
-        The PyQt object to disconnect.
+    obj : Qt object
+        The Qt object to disconnect.
     """
     while True:
         try:
@@ -250,8 +264,8 @@ def extend_combo_list(cbox, item, reconnect=None):
 
     Parameters
     ----------
-    cbox : PyQt.QtComboList
-        The PyQt combo list object.
+    cbox : QtWidgets.QComboBox
+        The Qt combo list object.
     item : string
         Name of the new item.
     reconnect : function | None
@@ -278,8 +292,8 @@ def get_combo_list_index(cbox, name):
 
     Parameters
     ----------
-    cbox : PyQt.QtComboList
-        The PyQt combo list object.
+    cbox : QtWidgets.QComboBox
+        The Qt combo list object.
     name : string
         Name of the item.
 
@@ -298,8 +312,8 @@ def safely_set_cbox(cbox, idx, fcn=None):
 
     Parameters
     ----------
-    cbox : PyQt.QtComboList
-        The PyQt combo list object.
+    cbox : QtWidgets.QComboBox
+        The Qt combo list object.
     idx : float/string
         Index or name of the item.
     fcn : list | None
@@ -363,8 +377,8 @@ def toggle_enable_tab(tab, name, enable=False):
 
     Parameters
     ----------
-    tab : PyQt.QTabWidget
-        The PyQt tab.
+    tab : QtWidgets.QTabWidget
+        The Qt tab.
     name : string
         Name of the tab.
     enable : bool | False
@@ -384,7 +398,7 @@ def get_screen_size(app):
     Parameters
     ----------
     app : QtApplication
-        A PyQt application.
+        A Qt application.
 
     Returns
     -------
@@ -393,8 +407,40 @@ def get_screen_size(app):
     height : int
         Height of the application.
     """
-    resolution = app.desktop().screenGeometry()
-    return resolution.width(), resolution.height()
+
+    screen = None
+    if hasattr(app, "primaryScreen"):
+        screen = app.primaryScreen()
+
+    if screen is None and hasattr(QtGui, "QGuiApplication"):
+        try:
+            screen = QtGui.QGuiApplication.primaryScreen()
+        except AttributeError:  # pragma: no cover - Qt5 fallback
+            screen = None
+
+    if screen is None and hasattr(app, "screens"):
+        screens = app.screens()
+        if screens:
+            screen = screens[0]
+
+    if screen is not None:
+        geometry = (
+            screen.availableGeometry()
+            if hasattr(screen, "availableGeometry")
+            else screen.geometry()
+        )
+        return geometry.width(), geometry.height()
+
+    desktop = getattr(app, "desktop", None)
+    if callable(desktop):  # pragma: no cover - Qt5 fallback path
+        desktop_widget = desktop()
+        if hasattr(desktop_widget, "availableGeometry"):
+            rect = desktop_widget.availableGeometry()
+        else:
+            rect = desktop_widget.screenGeometry()
+        return rect.width(), rect.height()
+
+    raise RuntimeError("Unable to determine screen size from the Qt application")
 
 
 def set_widget_size(app, widget, width=100., height=100.):
@@ -403,9 +449,9 @@ def set_widget_size(app, widget, width=100., height=100.):
     Parameters
     ----------
     app : QtApplication
-        A PyQt application.
+        A Qt application.
     widget : QtWidget
-        The PyQt widget.
+        The Qt widget.
     width : float | 100.
         Proportional width (0 < width <= 100).
     height : float | 100.
@@ -426,9 +472,16 @@ def set_widget_size(app, widget, width=100., height=100.):
     widget.resize(size)
 
 
-def fill_pyqt_table(table, col_names=None, col=None, df=None, filter=None,
-                    filter_col=0, check=None):
-    """Fill a PyQt table widget.
+def fill_qt_table(
+    table,
+    col_names=None,
+    col=None,
+    df=None,
+    filter=None,
+    filter_col=0,
+    check=None,
+):
+    """Fill a Qt table widget.
 
     Parameters
     ----------
@@ -439,8 +492,9 @@ def fill_pyqt_table(table, col_names=None, col=None, df=None, filter=None,
     df : pandas.DataFrame or dict | None
         Alternatively, a pandas DataFrame or a dictionary can also be used.
     """
-    from PyQt5.QtWidgets import (QTableWidgetItem, QTableWidget, QTableView)
-    from PyQt5 import QtGui, QtCore
+    QTableWidgetItem = QtWidgets.QTableWidgetItem
+    QTableWidget = QtWidgets.QTableWidget
+    QTableView = QtWidgets.QTableView
 
     # ________________________ Checking ________________________
     # Dictionary / pandas.DataFrame :
@@ -483,3 +537,7 @@ def fill_pyqt_table(table, col_names=None, col=None, df=None, filter=None,
             filter.textChanged.connect(filt_model.setFilterRegExp)
             table.setModel(filt_model)
         return model
+
+
+# Backward compatibility ----------------------------------------------------
+fill_pyqt_table = fill_qt_table

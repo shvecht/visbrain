@@ -19,9 +19,12 @@ def test_import_scipy():
 
 
 @pytest.mark.gui
-def test_import_pyqt():
-    """Import PyQt."""
-    import PyQt5  # noqa
+def test_import_qt():
+    """Import the active Qt binding."""
+    try:
+        import visbrain.qt  # noqa: F401
+    except ImportError:
+        pytest.skip("Qt bindings are unavailable")
 
 
 @pytest.mark.gui

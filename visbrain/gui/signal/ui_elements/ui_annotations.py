@@ -1,6 +1,7 @@
 """Signal annotations."""
-from PyQt5 import QtWidgets
 import numpy as np
+
+from visbrain.qt import QtWidgets
 
 from visbrain.utils import textline2color
 from visbrain.io import dialog_color

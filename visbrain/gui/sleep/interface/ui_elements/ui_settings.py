@@ -1,7 +1,8 @@
 """Main class for settings managment."""
 import numpy as np
 import datetime
-from PyQt5.QtCore import QObjectCleanupHandler
+
+from visbrain.qt import QtCore
 
 import vispy.visuals.transforms as vist
 
@@ -459,8 +460,8 @@ class UiSettings(object):
             self._chanLabels[k].deleteLater()
             self._amplitudeTxt[k].deleteLater()
             self._chanCanvas[k].parent = None
-        QObjectCleanupHandler().add(self._chanGrid)
-        QObjectCleanupHandler().clear()
+        QtCore.QObjectCleanupHandler().add(self._chanGrid)
+        QtCore.QObjectCleanupHandler().clear()
         # Spectrogram :
         self._specCanvas.parent = None
         self._SpecW.deleteLater(), self._SpecLayout.deleteLater()

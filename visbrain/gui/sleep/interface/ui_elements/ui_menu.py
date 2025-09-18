@@ -2,7 +2,7 @@
 import os
 
 import numpy as np
-from PyQt5 import QtWidgets
+from visbrain.qt import QtWidgets
 
 from visbrain.utils import HelpMenu
 from visbrain.io import (dialog_save, dialog_load, write_fig_hyp, write_csv,

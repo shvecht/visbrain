@@ -1,7 +1,9 @@
 """Main class for sleep tools managment."""
-import numpy as np
-from PyQt5 import QtWidgets, QtCore
 import logging
+
+import numpy as np
+
+from visbrain.qt import QtWidgets, QtCore
 
 from visbrain.utils import (remdetect, spindlesdetect, slowwavedetect,
                             kcdetect, peakdetect, mtdetect)

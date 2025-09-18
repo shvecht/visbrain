@@ -1,5 +1,5 @@
 """Screenshot window and related functions."""
-from visbrain.io import write_fig_pyqt, write_fig_canvas, dialog_save
+from visbrain.io import write_fig_qt, write_fig_canvas, dialog_save
 from visbrain.utils import ScreenshotPopup
 
 
@@ -33,7 +33,7 @@ class UiScreenshot(object):
 
         if kwargs['entire']:  # Screenshot of the entire window
             self._ssGui._ss.close()
-            write_fig_pyqt(self, filename)
+            write_fig_qt(self, filename)
         else:  # Screenshot of selected canvas
             # Get canvas name :
             name = kwargs['canvas']

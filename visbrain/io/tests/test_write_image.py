@@ -3,8 +3,7 @@ import numpy as np
 import pytest
 
 from visbrain.utils import generate_eeg
-from visbrain.io import (write_fig_hyp, write_fig_spindles,  # noqa
-                         write_fig_canvas, write_fig_pyqt)
+from visbrain.io import write_fig_hyp, write_fig_spindles
 from visbrain.tests._tests_visbrain import _TestVisbrain
 
 
@@ -40,6 +39,6 @@ class TestWriteImage(_TestVisbrain):
         pass
 
     @pytest.mark.skip('Should be tested inside modules.')
-    def test_write_fig_pyqt(self):
-        """Test function write_fig_pyqt."""
+    def test_write_fig_qt(self):
+        """Test function write_fig_qt."""
         pass

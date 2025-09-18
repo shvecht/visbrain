@@ -65,13 +65,13 @@ Dependencies
 
 Visbrain requires :
 
-* NumPy >= 1.23
-* SciPy >= 1.9
-* VisPy >= 0.12
-* Matplotlib >= 3.6
-* PySide6 >= 6.7 (installs ``shiboken6``)
-* Pillow >= 9.5
-* PyOpenGL >= 3.1.6
+* NumPy >= 1.26.4
+* SciPy >= 1.11.4
+* VisPy >= 0.13.0
+* Matplotlib >= 3.8.4
+* PySide6 >= 6.7.1 (installs ``shiboken6``)
+* Pillow >= 10.3.0
+* PyOpenGL >= 3.1.7
 
 User installation
 +++++++++++++++++

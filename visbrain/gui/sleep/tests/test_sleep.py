@@ -2,8 +2,14 @@
 import os
 
 import numpy as np
+import pytest
 from vispy.app.canvas import MouseEvent, KeyEvent
 from vispy.util.keys import Key
+
+try:  # pragma: no cover - optional Qt bindings
+    from visbrain.qt import QtWidgets
+except ImportError:  # pragma: no cover - Qt not installed
+    QtWidgets = None
 
 from visbrain.gui import Sleep
 from visbrain.io import download_file, path_to_visbrain_data
@@ -21,6 +27,10 @@ onset = np.array([100, 2000, 5000])
 
 # Create Sleep application :
 sp = Sleep(data=sleep_file, hypno=hypno_file, axis=True, annotations=onset)
+
+pytestmark = pytest.mark.skipif(
+    QtWidgets is None, reason="Qt bindings are unavailable"
+)
 
 
 class TestSleep(_TestVisbrain):
@@ -86,7 +96,6 @@ class TestSleep(_TestVisbrain):
     ###########################################################################
     def test_save_hyp_data(self):
         """Test saving hypnogram data."""
-        from PyQt5 import QtWidgets
         yes = QtWidgets.QMessageBox.Yes
         no = QtWidgets.QMessageBox.No
         sp.saveHypData(filename=self.to_tmp_dir('hyp_data.txt'), reply=yes)

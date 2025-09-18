@@ -25,7 +25,7 @@ remaining realistic for the team to test:
   wheels for all target platforms, has an LGPL-friendly license, and maps
   closely onto Qt 6 API expectations. Shipping with the Qt 6 stack keeps the
   modernization roadmap focused on the end-state platform rather than
-  maintaining compatibility shims for PyQt5.
+  maintaining compatibility shims for the legacy PyQt line.
 
 These targets will guide dependency minimums, CI matrices, and documentation
 updates in later phases.
@@ -54,7 +54,10 @@ Next steps
 ----------
 
 * Track early compatibility issues with PySide6 and Qt 6 APIs while preparing
+  broader refactors.
 * Document environment quirks as they surface so future contributors have
   up-to-date guidance.
-* Begin auditing modules that rely on PyQt5-only behavior so they can be
+* Begin auditing modules that rely on legacy PyQt-only behavior so they can be
   replaced with PySide6-compatible patterns ahead of Phase 2 refactors.
+* Refresh contributor docs when the dependency baselines move so that setup
+  guidance always points to the PySide6 toolchain.

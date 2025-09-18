@@ -6,6 +6,7 @@ import numpy as np
 from vispy import scene
 
 from ..io import write_fig_canvas, mpl_preview, dialog_save
+from ..qt import QtWidgets
 from ..utils import color2vb, set_log_level, rotate_turntable, FixedCam
 from ..visuals import CbarVisual
 from ..config import CONFIG, PROFILER
@@ -647,11 +648,10 @@ class SceneObj(object):
         # On key pressed :
         def key_pressed(event):  # noqa
             if event.text == 's':
-                from PyQt5.QtWidgets import QWidget
                 ext = ['png', 'tiff', 'jpg']
                 _ext = ['%s file (*.%s)' % (k.upper(), k) for k in ext]
                 _ext += ['All files (*.*)']
-                saveas = dialog_save(QWidget(), name='Export the scene',
+                saveas = dialog_save(QtWidgets.QWidget(), name='Export the scene',
                                      default='canvas.png', allext=_ext)
                 if saveas:
                     write_fig_canvas(saveas, self.canvas,
