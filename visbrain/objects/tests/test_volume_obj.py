@@ -1,9 +1,10 @@
 """Test VolumeObj."""
 import numpy as np
+import pytest
 
 from visbrain.objects.tests._testing_objects import _TestVolumeObject
 from visbrain.objects import VolumeObj
-from visbrain.io import download_file, clean_tmp
+from visbrain.io import clean_tmp
 
 
 v_obj = VolumeObj('aal')
@@ -35,18 +36,29 @@ class TestVolumeObj(_TestVolumeObject):
 
     def test_nii_definition(self):
         """Test function nii_definition."""
-        VolumeObj(download_file('GG-853-GM-0.7mm.nii.gz',
-                                astype='example_data'))
+        nib = pytest.importorskip('nibabel')
+        img = nib.Nifti1Image(np.random.rand(4, 4, 4), np.eye(4))
+        path = self.to_tmp_dir('synthetic.nii.gz')
+        nib.save(img, path)
+        VolumeObj(path)
 
     def test_save(self):
         """Test function save."""
-        v_obj = VolumeObj(download_file('GG-853-GM-0.7mm.nii.gz',
-                                        astype='example_data'))
+        nib = pytest.importorskip('nibabel')
+        img = nib.Nifti1Image(np.random.rand(4, 4, 4), np.eye(4))
+        path = self.to_tmp_dir('synthetic_save.nii.gz')
+        nib.save(img, path)
+        v_obj = VolumeObj(path)
         v_obj.save()
         v_obj.save(tmpfile=True)
 
     def test_remove(self):
         """Test function remove."""
-        v_obj = VolumeObj('GG-853-GM-0.7mm')
+        nib = pytest.importorskip('nibabel')
+        img = nib.Nifti1Image(np.random.rand(4, 4, 4), np.eye(4))
+        path = self.to_tmp_dir('synthetic_remove.nii.gz')
+        nib.save(img, path)
+        v_obj = VolumeObj(path)
+        v_obj.save()
         v_obj.remove()
         clean_tmp()

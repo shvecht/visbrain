@@ -22,29 +22,46 @@ List of supported ROI atlases :
     Inside visbrain, supported levels are 7, 12, 20, 36, 64, 122 and ROI.
 
 .. warning::
-    ROI atlases are stored inside NumPy files that are downloaded when needed.
-    Every ROI files is downloaded to the ~/visbrain_data/roi folder
+    ROI atlases are stored inside NumPy files that must be installed explicitly.
+    Fetch them with ``python -m visbrain.io.download --list`` before running
+    this example.
 """
+from pathlib import Path
+
 import numpy as np
 
 from visbrain.objects import RoiObj, ColorbarObj, SceneObj, SourceObj, BrainObj
-from visbrain.io import download_file, path_to_visbrain_data, read_nifti
+from visbrain.io import path_to_visbrain_data, read_nifti
 
 ###############################################################################
-# Download data
+# Load data
 ###############################################################################
-# In order to work, this example need to download some data i.e coordinates of
-# intracranial sources and a parcellates atlas (MIST) to illustrate how to
-# define your own RoiObj
+# This example assumes the optional datasets ``xyz_sample.npz`` and
+# ``MIST_ROI.zip`` were installed beforehand using
+# ``python -m visbrain.io.download <name> --type example_data``. The helper below
+# resolves their location inside the Visbrain cache.
 
-# Get the path to the ~/visbrain_data/example_data folder
-vb_path = path_to_visbrain_data(folder='example_data')
-# Download (x, y, z) coordinates of intracranial sources
-mat = np.load(download_file('xyz_sample.npz', astype='example_data'))
+vb_path = Path(path_to_visbrain_data(folder='example_data', create=True))
+vb_path_str = str(vb_path)
+
+xyz_path = Path(path_to_visbrain_data('xyz_sample.npz', folder='example_data'))
+if not xyz_path.exists():
+    raise RuntimeError(
+        "xyz_sample.npz is not installed. Run `python -m visbrain.io.download "
+        "xyz_sample.npz --type example_data` to fetch the example coordinates."
+    )
+mat = np.load(xyz_path)
 xyz, subjects = mat['xyz'], mat['subjects']
 data = np.random.uniform(low=-1., high=1., size=(xyz.shape[0],))
-# Download the MIST parcellates
-download_file('MIST_ROI.zip', unzip=True, astype='example_data')
+# Ensure the MIST atlas assets exist
+mist_nifti = Path(path_to_visbrain_data('MIST_ROI.nii.gz',
+                                        folder='example_data'))
+mist_csv = Path(path_to_visbrain_data('MIST_ROI.csv', folder='example_data'))
+if not (mist_nifti.exists() and mist_csv.exists()):
+    raise RuntimeError(
+        "MIST_ROI assets are missing. Run `python -m visbrain.io.download "
+        "MIST_ROI.zip --type example_data` to install them."
+    )
 
 ###############################################################################
 # Scene creation
@@ -76,11 +93,11 @@ CBAR_STATE = dict(cbtxtsz=12, txtsz=10., width=.1, cbtxtsh=3.,
 # inspect in this file the index of the ROI that you're looking for.
 
 roi_to_find1 = RoiObj('brodmann')             # Use Brodmann areas
-ref_brod = roi_to_find1.get_labels(vb_path)   # Save Brodmann
+ref_brod = roi_to_find1.get_labels(vb_path_str)   # Save Brodmann
 roi_to_find1('aal')                           # Switch to AAL
-ref_aal = roi_to_find1.get_labels(vb_path)    # Save AAL
+ref_aal = roi_to_find1.get_labels(vb_path_str)    # Save AAL
 roi_to_find1('talairach')                     # Switch to Talairach
-# ref_tal = roi_to_find1.get_labels(vb_path)    # Save Talairach
+# ref_tal = roi_to_find1.get_labels(vb_path_str)    # Save Talairach
 
 #####################################
 # **Method 2 :** explicitly search where is the ROI that you're looking for
@@ -138,7 +155,7 @@ sc.add_to_subplot(roi_aal, row=0, col=1, rotate='top', zoom=.4,
 
 # Define the roi object using the MIST at resolution 7
 roi_dmn = RoiObj('mist_7')
-roi_dmn.get_labels(save_to_path=vb_path)  # save the labels
+roi_dmn.get_labels(save_to_path=vb_path_str)  # save the labels
 dmn_idx = roi_dmn.where_is('Default mode network')
 roi_dmn.select_roi(select=dmn_idx)
 # Define the source object and project source's data on the DMN
@@ -164,7 +181,7 @@ sc.add_to_subplot(cb_dmn, row=0, col=3, width_max=200)
 
 # Define the MIST object at the ROI level
 roi_mist = RoiObj('mist_ROI')
-# roi_mist.get_labels(save_to_path=vb_path)  # save the labels
+# roi_mist.get_labels(save_to_path=vb_path_str)  # save the labels
 # Define the source object and analyse those sources using the MIST
 s_obj = SourceObj('anat', xyz, data=data)
 analysis = s_obj.analyse_sources(roi_mist)

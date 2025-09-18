@@ -27,6 +27,22 @@ continue to ship the resource files consumed at runtime. Contributor-facing
 documentation now references the PySide6 toolchain so setup guides match the
 packaging metadata.
 
+Data management also moved under the packaging umbrella. Frequently-used
+resources (ROI atlases, EEG montages and sleep annotations) now live in the
+``visbrain.data`` package and are exposed through ``importlib.resources``. The
+``path_to_visbrain_data`` helper was updated to return bundled assets without
+creating ``~/visbrain_data``; writable caches now follow platform defaults or
+the ``VISBRAIN_DATA_DIR`` override. Functions that previously downloaded
+archives on demand now raise a ``FileNotFoundError`` with instructions to run
+``python -m visbrain.io.download <name> --type <kind>`` so data fetches become
+an explicit user workflow instead of an implicit side effect.
+
+The downloader doubles as a small CLI utility: running ``python -m
+visbrain.io.download --list`` enumerates all available resources, while options
+such as ``--dest`` and ``--use-pwd`` control where the files land. Archives are
+extracted automatically unless ``--no-unzip`` is provided, keeping offline
+installs self-contained.
+
 Developer workflow
 ------------------
 

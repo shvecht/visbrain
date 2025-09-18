@@ -37,15 +37,15 @@ def add_brain_template(name, vertices, faces, normals=None, lr_index=None,
     # Convert meshdata :
     vertices, faces, normals = convert_meshdata(vertices, faces, normals)
     # Create templates folder if doesn't exist :
-    vb_path = path_to_visbrain_data(folder='templates')
-    if not os.path.exists(vb_path):
-        os.mkdir(vb_path)
+    path_to_visbrain_data(folder='templates', create=True,
+                          allow_bundled=False)
     # Get path to the templates/ folder :
     name = os.path.splitext(name)[0]
     if tmpfile:
         path = path_to_tmp(folder='templates', file=name + '.npz')
     else:
-        path = path_to_visbrain_data(folder='templates', file=name + '.npz')
+        path = path_to_visbrain_data(folder='templates', file=name + '.npz',
+                                     create=True, allow_bundled=False)
     # Save the template :
     np.savez_compressed(path, vertices=vertices, faces=faces, normals=normals,
                         lr_index=lr_index)
@@ -62,7 +62,8 @@ def remove_brain_template(name):
     """
     # Get path to the templates/ folder :
     name = os.path.splitext(name)[0]
-    path = path_to_visbrain_data(folder='templates', file=name + '.npz')
+    path = path_to_visbrain_data(folder='templates', file=name + '.npz',
+                                 allow_bundled=False)
     # Remove the file from templates/ folder :
     if os.path.isfile(path):
         os.remove(path)
@@ -88,13 +89,13 @@ def save_volume_template(name, vol, labels, index, hdr, tmpfile=False):
     hdr : array_like
         The matrix of transformation of shape (4, 4).
     """
-    path_to_save = path_to_visbrain_data(folder='roi')
-    if not os.path.exists(path_to_save):
-        os.mkdir(path_to_save)
+    path_to_save = path_to_visbrain_data(folder='roi', create=True,
+                                         allow_bundled=False)
     if tmpfile:
         path_to_save = path_to_tmp(folder='roi', file=name + '.npz')
     else:
-        path_to_save = path_to_visbrain_data(folder='roi', file=name + '.npz')
+        path_to_save = path_to_visbrain_data(folder='roi', file=name + '.npz',
+                                             create=True, allow_bundled=False)
     np.savez_compressed(path_to_save, vol=vol, hdr=hdr, index=index,
                         labels=labels)
     logger.info("%s is now a default ROI object. Use `r_obj = RoiObj('%s')` to"
@@ -109,7 +110,8 @@ def remove_volume_template(name):
     name : string
         Name of the ROI atlas.
     """
-    path_to_file = path_to_visbrain_data(folder='roi', file=name + '.npz')
+    path_to_file = path_to_visbrain_data(folder='roi', file=name + '.npz',
+                                         allow_bundled=False)
     if os.path.isfile(path_to_file):
         os.remove(path_to_file)
         logger.info("%s ROI object removed." % name)

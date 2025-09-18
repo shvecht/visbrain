@@ -1,0 +1,6 @@
+Time	Stage
+0	W
+30	N1
+60	N2
+90	N3
+120	REM

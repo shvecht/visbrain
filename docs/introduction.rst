@@ -67,6 +67,32 @@ Optional dependencies
 * lspopt : multitaper spectrogram
 * imageio (>= 2.34.1) : for animated GIF export
 
+Data resources
+--------------
+
+Visbrain bundles a lightweight sample dataset inside the wheel so core
+functionality works without touching the network. These resources include the
+default brain templates, ROI atlases, a reference EEG montage and a short sleep
+hypnogram. They can be accessed with :func:`visbrain.io.path_to_visbrain_data`
+without creating ``~/visbrain_data``::
+
+   from visbrain.io import path_to_visbrain_data
+
+   bundled = path_to_visbrain_data('B1.npz', folder='templates')
+
+Additional examples—such as the extended sleep recordings or large surface
+meshes—remain optional downloads. Use the command line helper to fetch them into
+Visbrain's writable cache::
+
+   python -m visbrain.io.download sleep_rec.zip --type example_data
+
+The cache lives in a platform-appropriate directory (``%APPDATA%/Visbrain`` on
+Windows, ``~/Library/Application Support/Visbrain`` on macOS and
+``~/.local/share/visbrain`` on Linux). Set ``VISBRAIN_DATA_DIR`` to store the
+datasets in a custom location. The downloader accepts ``--list`` to show all
+available assets and honours ``--dest`` or ``--use-pwd`` when you prefer to
+download into a project-specific directory.
+
 Regular installation
 --------------------
 

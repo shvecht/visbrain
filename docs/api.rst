@@ -102,6 +102,7 @@ I/O
    :template: function.rst
 
    download_file
+   available_downloads
    path_to_visbrain_data
    read_stc
    write_fig_hyp

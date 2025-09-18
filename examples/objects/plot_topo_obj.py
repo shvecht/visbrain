@@ -11,19 +11,27 @@ object i.e :
     levels with custom colors)
   * Display connectivity
 """
+from pathlib import Path
+
 import numpy as np
 
 from visbrain.objects import TopoObj, ColorbarObj, SceneObj
-from visbrain.io import download_file
+from visbrain.io import path_to_visbrain_data
 
 ###############################################################################
-# Download data
+# Load data
 ###############################################################################
-# First, we download the data. A directory should be created to
-# ~/visbrain_data/example_data. This example contains beta power for several
-# channels defined by there xy coordinates.
+# This example relies on optional data installed via
+# ``python -m visbrain.io.download topoplot_data.npz --type example_data``. The
+# bundled helper locates the file inside the Visbrain cache.
 
-path = download_file('topoplot_data.npz', astype='example_data')
+path = Path(path_to_visbrain_data('topoplot_data.npz', folder='example_data'))
+if not path.exists():
+    raise RuntimeError(
+        "topoplot_data.npz is not installed. Run `python -m visbrain.io.download "
+        "topoplot_data.npz --type example_data` to fetch it."
+    )
+
 mat = np.load(path)
 xy, data = mat['xyz'], mat['data']
 channels = [str(k) for k in range(len(data))]

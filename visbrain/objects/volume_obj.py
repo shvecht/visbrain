@@ -11,7 +11,7 @@ from vispy.visuals.transforms import MatrixTransform
 from .visbrain_obj import VisbrainObject, CombineObjects
 from ..utils import (wrap_properties, normalize, array_to_stt, stt_to_array)
 from ..io import (read_nifti, save_volume_template, remove_volume_template,
-                  download_file, path_to_visbrain_data, read_mist)
+                  path_to_visbrain_data, read_mist)
 
 
 logger = logging.getLogger('visbrain')
@@ -86,18 +86,28 @@ class _Volume(VisbrainObject):
         elif isinstance(name, str):
             # Switch between MIST and {aal, brodmann...} :
             if 'MIST' in name.upper():
-                mist_path = path_to_visbrain_data('mist', 'roi')
+                mist_path = path_to_visbrain_data('mist', 'roi',
+                                                  allow_bundled=False)
                 if not os.path.isdir(mist_path):
-                    download_file('mist.zip', astype='roi', unzip=True)
+                    raise FileNotFoundError(
+                        "MIST datasets are not installed. Run `python -m "
+                        "visbrain.io.download mist.zip --type roi --unzip` "
+                        "to fetch them."
+                    )
                 (vol, labels, index, hdr), system = read_mist(name), 'mni'
             else:
-                to_load, name_npz = None, name + '.npz'
-                if name in self._df_get_downloaded():
+                name_npz = name + '.npz'
+                try:
                     to_load = self._df_get_file(name_npz, download=False)
-                elif name_npz in self._df_get_downloadable():
-                    to_load = self._df_download_file(name_npz)
-                # Load file :
-                if isinstance(to_load, str):
+                except FileNotFoundError:
+                    if name_npz in self._df_get_downloadable():
+                        raise FileNotFoundError(
+                            f"Dataset '{name_npz}' is not installed. Run "
+                            "`python -m visbrain.io.download {name_npz} "
+                            f"--type {self._data_folder}` to fetch it."
+                        )
+                    raise
+                else:
                     self._name = os.path.split(to_load)[1].split('.npz')[0]
                     arch = np.load(to_load, allow_pickle=True)
                     vol, hdr = arch['vol'], arch['hdr']

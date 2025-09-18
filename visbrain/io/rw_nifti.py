@@ -77,7 +77,7 @@ def read_mist(name):
     # Define path :
     parc, parc_info = '%s.nii.gz', '%s.csv'
     folder, folder_info = 'Parcellations', 'Parcel_Information'
-    mist_path = path_to_visbrain_data('mist', 'roi')
+    mist_path = path_to_visbrain_data('mist', 'roi', allow_bundled=False)
     parc_path = os.path.join(*(mist_path, folder, parc % name))
     parc_info_path = os.path.join(*(mist_path, folder_info, parc_info % name))
     # Load info :

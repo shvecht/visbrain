@@ -1,10 +1,13 @@
 """Test function in read_data.py."""
-# import pytest
 
+import os
+
+import pytest
+
+from visbrain.io import path_to_visbrain_data
 from visbrain.io.read_data import (read_mat, read_pickle, read_npy, read_npz,  # noqa
                                    read_txt, read_csv, read_json,
                                    read_stc, read_x3d, read_gii, read_obj)
-from visbrain.io.download import download_file
 
 
 class TestReadData(object):
@@ -18,24 +21,45 @@ class TestReadData(object):
 
     def test_read_stc(self):
         """Test function read_stc."""
-        read_stc(download_file("meg_source_estimate-lh.stc",
-                               astype='example_data'))
+        path = path_to_visbrain_data("meg_source_estimate-lh.stc",
+                                     'example_data')
+        if not os.path.isfile(path):
+            pytest.skip(
+                "STC example not installed. Run `python -m visbrain.io.download "
+                "meg_source_estimate-lh.stc --type example_data` to fetch it."
+            )
+        read_stc(path)
 
     def test_read_x3d(self):
         """Test function read_x3d."""
-        file = download_file('ferret.x3d', astype='example_data')
+        file = path_to_visbrain_data('ferret.x3d', 'example_data')
+        if not os.path.isfile(file):
+            pytest.skip(
+                "X3D examples not installed. Run `python -m visbrain.io.download "
+                "ferret.x3d --type example_data` to fetch them."
+            )
         vert, faces = read_x3d(file)
         self._test_mesh(vert, faces)
 
     def test_read_gii(self):
         """Test function read_gii."""
-        file = download_file('lh.bert.inflated.gii', astype='example_data')
+        file = path_to_visbrain_data('lh.bert.inflated.gii', 'example_data')
+        if not os.path.isfile(file):
+            pytest.skip(
+                "GIfTI example not installed. Run `python -m visbrain.io.download "
+                "lh.bert.inflated.gii --type example_data` to fetch it."
+            )
         vert, faces = read_gii(file)
         self._test_mesh(vert, faces)
 
     def test_read_obj(self):
         """Test function read_obj."""
-        file = download_file('brain.obj', astype='example_data')
+        file = path_to_visbrain_data('brain.obj', 'example_data')
+        if not os.path.isfile(file):
+            pytest.skip(
+                "OBJ example not installed. Run `python -m visbrain.io.download "
+                "brain.obj --type example_data` to fetch it."
+            )
         vert, faces = read_obj(file)
         self._test_mesh(vert, faces)
 

@@ -1,19 +1,14 @@
 """Test command lines."""
-import os
+
+import numpy as np
+from PIL import Image
 
 from visbrain.gui import Figure
-from visbrain.io import download_file, path_to_visbrain_data
 from visbrain.tests._tests_visbrain import _TestVisbrain
 
 # List of image files to test with :
 _FILES = ['default.png', 'inside.png', 'count.png', 'density.png',
           'repartition.jpg', 'roi.jpg']
-download_file('figure.zip', unzip=True, astype='example_data')
-
-# Create a tmp/ directory :
-dir_path = os.path.dirname(os.path.realpath(__file__))
-path_to_tmp = os.path.join(*(dir_path, 'tmp'))
-
 
 class TestFigure(_TestVisbrain):
     """Test figure.py."""
@@ -24,7 +19,18 @@ class TestFigure(_TestVisbrain):
     def test_figure(self):
         """Test function figure."""
         # Get files :
-        files = [path_to_visbrain_data(k, 'example_data') for k in _FILES]
+        files = []
+        gradients = np.linspace(0, 255, num=16, dtype=np.uint8)
+        for idx, name in enumerate(_FILES):
+            img_path = self.to_tmp_dir(name)
+            grid = np.outer(gradients, np.ones_like(gradients, dtype=np.uint8))
+            rgb = np.stack([
+                np.roll(grid, idx, axis=0),
+                np.roll(grid, idx, axis=1),
+                np.flipud(grid),
+            ], axis=-1)
+            Image.fromarray(rgb).save(img_path)
+            files.append(img_path)
 
         # Titles :
         titles = ['Default', 'Sources inside', 'Connectivity',

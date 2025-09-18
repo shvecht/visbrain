@@ -133,11 +133,16 @@ class BrainObj(VisbrainObject):
             to_load = None
             name_npz = name + '.npz'
             # Identify if the template is already downloaded or not :
-            if name in self._df_get_downloaded():
+            try:
                 to_load = self._df_get_file(name_npz, download=False)
-            elif name_npz in self._df_get_downloadable():  # need download
-                to_load = self._df_download_file(name_npz)
-            assert isinstance(to_load, str)
+            except FileNotFoundError:
+                if name_npz in self._df_get_downloadable():
+                    raise FileNotFoundError(
+                        f"Brain template '{name_npz}' is not installed. Run "
+                        "`python -m visbrain.io.download {name_npz} --type "
+                        f"{self._data_folder}` to fetch it."
+                    )
+                raise
             # Load the template :
             arch = np.load(to_load)
             vertices, faces = arch['vertices'], arch['faces']
@@ -147,9 +152,12 @@ class BrainObj(VisbrainObject):
         # Sulcus :
         if sulcus is True:
             if not self._df_is_downloaded('sulcus.npy'):
-                sulcus_file = self._df_download_file('sulcus.npy')
-            else:
-                sulcus_file = self._df_get_file('sulcus.npy')
+                raise FileNotFoundError(
+                    "Sulcus template not installed. Run `python -m "
+                    "visbrain.io.download sulcus.npy --type "
+                    f"{self._data_folder}` to fetch it."
+                )
+            sulcus_file = self._df_get_file('sulcus.npy')
             sulcus = np.load(sulcus_file)
         elif isinstance(sulcus, np.ndarray):
             sulcus = sulcus

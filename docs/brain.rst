@@ -173,9 +173,18 @@ MNI templates
 .. figure::  _static/brain/brain_templates.png
    :align:   center
 
-By default, *Brain* comes with three brain templates respectively B1 (with cerebellum), B2 and B3 (smoothest).
+By default, *Brain* ships with three bundled brain templates (B1 with cerebellum
+coverage, and the smoother B2/B3 variants). They are packaged inside the wheel
+and available through :func:`visbrain.io.path_to_visbrain_data` even in offline
+environments.
 
-Further brain templates can be downloaded `here <https://drive.google.com/open?id=0B6vtJiCQZUBvd0xfTHJqcHg2bTA>`_.
+High-resolution meshes such as the inflated or white surfaces remain optional.
+Fetch them explicitly with::
+
+   python -m visbrain.io.download inflated.npz --type templates
+
+Use ``--list`` to explore the available template assets. Downloads are stored in
+the Visbrain cache or the directory specified via ``--dest``.
 
 
 Sources

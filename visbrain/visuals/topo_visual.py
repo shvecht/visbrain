@@ -12,6 +12,7 @@ Authors: Etienne Combrisson <e.combrisson@gmail.com>
 License: BSD (3-clause)
 """
 import logging
+import os
 
 import numpy as np
 from scipy.interpolate import interp2d
@@ -22,7 +23,7 @@ import vispy.visuals.transforms as vist
 
 from ..utils import (array2colormap, color2vb, mpl_cmap, normalize,
                      vpnormalize, vprecenter)
-from ..io import download_file
+from ..io import path_to_visbrain_data
 from .cbar import CbarVisual
 
 logger = logging.getLogger('visbrain')
@@ -434,7 +435,13 @@ class TopoMesh(object):
             List of channel names.
         """
         # Load the coordinates template :
-        path = download_file('eegref.npz', astype='topo')
+        path = path_to_visbrain_data('eegref.npz', 'topo')
+        if not os.path.isfile(path):  # pragma: no cover - optional dataset
+            raise FileNotFoundError(
+                "Topography reference 'eegref.npz' not installed. Run "
+                "`python -m visbrain.io.download eegref.npz --type topo` to "
+                "fetch it."
+            )
         file = np.load(path)
         name_ref, xyz_ref = file['chan'], file['xyz']
         keeponly = np.ones((len(chan)), dtype=bool)
