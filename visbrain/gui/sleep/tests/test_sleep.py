@@ -86,7 +86,7 @@ class TestSleep(_TestVisbrain):
     ###########################################################################
     def test_save_hyp_data(self):
         """Test saving hypnogram data."""
-        from PyQt5 import QtWidgets
+        from PySide6 import QtWidgets
         yes = QtWidgets.QMessageBox.Yes
         no = QtWidgets.QMessageBox.No
         sp.saveHypData(filename=self.to_tmp_dir('hyp_data.txt'), reply=yes)

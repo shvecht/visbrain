@@ -2,6 +2,7 @@
 import os
 import logging
 from functools import wraps
+from numbers import Integral
 
 import numpy as np
 import numpy.core.defchararray as npchar
@@ -564,7 +565,7 @@ class RoiObj(_Volume):
         return xyz
 
     def _select_roi(self, vol, level, smooth):
-        if isinstance(level, (int, np.int)):
+        if isinstance(level, Integral):
             condition = vol != level
         elif isinstance(level, float):
             condition = vol < level

@@ -2,8 +2,12 @@
 import sys
 import getopt
 import logging
+import os
 
-from PyQt5 import QtWidgets
+try:
+    from PySide6 import QtWidgets
+except ImportError:  # pragma: no cover - legacy fallback
+    from PyQt5 import QtWidgets  # type: ignore
 from vispy import app as visapp
 
 from visbrain.utils.others import Profiler
@@ -28,7 +32,24 @@ CONFIG['PYQT_APP'] = PYQT_APP
 CONFIG['SHOW_PYQT_APP'] = True
 
 # VisPy application
-CONFIG['VISPY_APP'] = visapp.application.Application()
+_VISPY_BACKEND = os.environ.get("VISPY_BACKEND") or "pyside6"
+try:
+    CONFIG['VISPY_APP'] = visapp.use_app(_VISPY_BACKEND)
+except Exception:  # pragma: no cover - fallback when backend missing
+    try:
+        CONFIG['VISPY_APP'] = visapp.use_app('pyqt5')
+    except Exception:
+        class _StubVispyApp:
+            def __init__(self, backend: str) -> None:
+                self.backend = backend
+
+            def run(self) -> None:  # pragma: no cover - simple stub
+                return None
+
+            def quit(self) -> None:  # pragma: no cover - simple stub
+                return None
+
+        CONFIG['VISPY_APP'] = _StubVispyApp(_VISPY_BACKEND)
 
 
 def use_app(backend_name):
@@ -44,7 +65,10 @@ try:
     ip = get_ipython()
     CONFIG['MPL_RENDER'] = True
     import vispy
-    vispy.use('PyQt5')
+    try:
+        vispy.use('pyside6')
+    except Exception:  # pragma: no cover - fallback to legacy backend
+        vispy.use('PyQt5')
 except NameError:
     pass
 
