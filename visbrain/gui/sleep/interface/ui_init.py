@@ -7,7 +7,7 @@ Grouped components :
 """
 import numpy as np
 
-from PyQt5 import QtWidgets
+from PySide6 import QtWidgets
 from vispy import app, scene
 import vispy.visuals.transforms as vist
 

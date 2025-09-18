@@ -1,5 +1,5 @@
 """Signal annotations."""
-from PyQt5 import QtWidgets
+from PySide6 import QtWidgets
 import numpy as np
 
 from visbrain.utils import textline2color

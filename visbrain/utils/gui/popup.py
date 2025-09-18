@@ -1,7 +1,9 @@
 """Create basic popup."""
 
-from PyQt5.Qt import QWidget, QRect
-from PyQt5 import QtWidgets, QtCore
+from PySide6 import QtWidgets, QtCore
+from PySide6.QtCore import QRect
+from PySide6.QtGui import QAction
+from PySide6.QtWidgets import QWidget
 import webbrowser
 
 from .screenshot_gui import Ui_Screenshot
@@ -127,7 +129,7 @@ class HelpMenu(object):
             # Shortcuts popup window :
             self._shpopup = ShortcutPopup()
             # Shortcuts :
-            shortcuts = QtWidgets.QAction("&Shortcuts", self)
+            shortcuts = QAction("&Shortcuts", self)
             shortcuts.setShortcut(_translate("MainWindow", "Ctrl+T"))
             shortcuts.triggered.connect(self._shpopup.show)
             help_menu.addAction(shortcuts)
@@ -137,7 +139,7 @@ class HelpMenu(object):
 
         for menu, url in doc_section.items():
             # Create action :
-            section_action = QtWidgets.QAction("&" + menu, self)
+            section_action = QAction("&" + menu, self)
             # Action function :
 
             def define(url):
@@ -150,7 +152,7 @@ class HelpMenu(object):
             # Add action to the menu :
             help_section.addAction(section_action)
         # PDF documentation action :
-        pdf_doc = QtWidgets.QAction("&Download doc (pdf)", self)
+        pdf_doc = QAction("&Download doc (pdf)", self)
         pdf_doc.triggered.connect(self._fcn_open_pdf_doc)
         help_menu.addAction(pdf_doc)
 

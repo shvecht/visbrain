@@ -1,7 +1,7 @@
 """Main class for info managment."""
 from os import path
 
-from PyQt5 import QtWidgets
+from PySide6 import QtWidgets
 
 from visbrain.utils import sleepstats
 

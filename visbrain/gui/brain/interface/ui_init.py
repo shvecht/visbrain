@@ -6,7 +6,7 @@ Grouped components :
     * User shortcuts
 """
 
-from PyQt5 import QtWidgets
+from PySide6 import QtWidgets
 
 from vispy import app
 from vispy.scene.cameras import TurntableCamera

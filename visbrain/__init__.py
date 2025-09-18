@@ -21,13 +21,13 @@ import sys as _sys
 __version__ = "0.4.6"
 
 
-# PyQt5 crash if an error occured. This small function fix it for all modules
-# to retrieve the PyQt4 behavior :
+# Qt bindings can crash if an error occurs. This small function fixes it for
+# all modules to retrieve the original PyQt4 behavior:
 
 
-def _pyqt4_behavior(type, value, tback):
-    """Retrieve PyQt4 behavior if an error occured."""
+def _qt_behavior(type, value, tback):
+    """Preserve the legacy Qt exception hook behaviour."""
     _sys.__excepthook__(type, value, tback)
 
 
-_sys.excepthook = _pyqt4_behavior
+_sys.excepthook = _qt_behavior

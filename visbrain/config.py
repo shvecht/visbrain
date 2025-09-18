@@ -3,7 +3,7 @@ import sys
 import getopt
 import logging
 
-from PyQt5 import QtWidgets
+from PySide6 import QtWidgets
 from vispy import app as visapp
 
 from visbrain.utils.others import Profiler
@@ -44,7 +44,7 @@ try:
     ip = get_ipython()
     CONFIG['MPL_RENDER'] = True
     import vispy
-    vispy.use('PyQt5')
+    vispy.use('PySide6')
 except NameError:
     pass
 

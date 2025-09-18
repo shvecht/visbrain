@@ -5,7 +5,7 @@ commands for the user
 """
 import numpy as np
 import logging
-from PyQt5 import QtCore
+from PySide6 import QtCore
 
 from visbrain.objects.volume_obj import VOLUME_CMAPS
 from visbrain.utils import fill_pyqt_table

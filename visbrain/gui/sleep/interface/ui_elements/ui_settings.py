@@ -1,9 +1,22 @@
 """Main class for settings managment."""
-import numpy as np
 import datetime
-from PyQt5.QtCore import QObjectCleanupHandler
+import numpy as np
+
+from PySide6 import QtWidgets
 
 import vispy.visuals.transforms as vist
+
+
+def _clear_layout(layout: QtWidgets.QLayout) -> None:
+    """Recursively delete all items contained in *layout*."""
+    while layout.count():
+        item = layout.takeAt(0)
+        widget = item.widget()
+        if widget is not None:
+            widget.deleteLater()
+        child_layout = item.layout()
+        if child_layout is not None:
+            _clear_layout(child_layout)
 
 
 class UiSettings(object):
@@ -262,19 +275,24 @@ class UiSettings(object):
     def _fcn_slider_settings(self):
         """Function applied to change slider settings."""
         # Get current slider value :
-        sl = self._SlVal.value()
-        slmax = self._SlVal.maximum()
-        win = self._SigWin.value()
+        sl = int(self._SlVal.value())
+        slmax = max(int(self._SlVal.maximum()), 1)
+        win = float(self._SigWin.value())
         # Set minimum :
-        self._SlVal.setMinimum(self._time.min())
+        self._SlVal.setMinimum(int(self._time.min()))
         # Set maximum :
-        step = self._SigSlStep.value()
-        self._SlVal.setMaximum(((self._time.max() - win) / step) + 1)
-        self._SlVal.setTickInterval(step)
-        self._SlVal.setSingleStep(step)
-        self._SlGoto.setMaximum((self._time.max() - win))
+        step = float(self._SigSlStep.value())
+        if step <= 0:
+            step = 1.0
+        step_int = max(1, int(round(step)))
+        max_val = int(round((self._time.max() - win) / step)) + 1
+        self._SlVal.setMaximum(max_val)
+        self._SlVal.setTickInterval(step_int)
+        self._SlVal.setSingleStep(step_int)
+        self._SlGoto.setMaximum(int(max(0, round(self._time.max() - win))))
         # Re-set slider value :
-        self._SlVal.setValue(sl * self._SlVal.maximum() / slmax)
+        new_value = int(round(sl * self._SlVal.maximum() / slmax))
+        self._SlVal.setValue(new_value)
 
         if self._slOnStart:
             self._fcn_slider_move()
@@ -459,8 +477,7 @@ class UiSettings(object):
             self._chanLabels[k].deleteLater()
             self._amplitudeTxt[k].deleteLater()
             self._chanCanvas[k].parent = None
-        QObjectCleanupHandler().add(self._chanGrid)
-        QObjectCleanupHandler().clear()
+        _clear_layout(self._chanGrid)
         # Spectrogram :
         self._specCanvas.parent = None
         self._SpecW.deleteLater(), self._SpecLayout.deleteLater()

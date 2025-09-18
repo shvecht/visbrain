@@ -372,7 +372,7 @@ texinfo_documents = [
 #texinfo_no_detailmenu = False
 
 
-# from PyQt5.QtWidgets import QMainWindow
+# from PySide6.QtWidgets import QMainWindow
 # import inspect
 
 # tuple_of_bad_meth = inspect.getmembers(QMainWindow)

@@ -3,7 +3,7 @@
 * dialog_save : Open a window to save a file
 * dialog_load : Open a window to load a file
 """
-from PyQt5.QtWidgets import QFileDialog, QColorDialog
+from PySide6.QtWidgets import QFileDialog, QColorDialog
 import os
 
 from .rw_utils import safety_save
@@ -18,7 +18,7 @@ def dialog_save(self, name='Save file', default='file',
     Parameters
     ----------
     self : class
-        Class containing PyQt5 elemnets.
+        Class containing PySide6 elemnets.
     name : string | 'Save file'
         Name of the saving window.
     default : string | 'file'
@@ -50,7 +50,7 @@ def dialog_load(self, name='Open file', default='file',
     Parameters
     ----------
     self : class
-        Class containing PyQt5 elemnets.
+        Class containing PySide6 elemnets.
     name : string | 'Save file'
         Name of the opening window.
     default : string | 'file'

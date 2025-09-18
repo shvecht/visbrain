@@ -19,9 +19,9 @@ def test_import_scipy():
 
 
 @pytest.mark.gui
-def test_import_pyqt():
-    """Import PyQt."""
-    import PyQt5  # noqa
+def test_import_pyside():
+    """Import PySide."""
+    import PySide6  # noqa
 
 
 @pytest.mark.gui

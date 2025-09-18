@@ -1,5 +1,5 @@
 """Main class for settings managment."""
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 
 import numpy as np
 
@@ -7,14 +7,6 @@ from ..ui_init import AxisCanvas, TimeAxis
 from visbrain.utils import mpl_cmap, color2vb
 from visbrain.config import PROFILER
 from visbrain.io.dependencies import is_lspopt_installed
-
-try:
-    _fromUtf8 = QtCore.QString.fromUtf8  # noqa
-except AttributeError:
-    def _fromUtf8(s):  # noqa
-        """From utf8 pyqt function."""
-        return s
-
 
 class UiPanels(object):
     """Main class for settings managment."""
@@ -33,7 +25,7 @@ class UiPanels(object):
         self._chanGrid = QtWidgets.QGridLayout()
         self._chanGrid.setContentsMargins(-1, -1, -1, 6)
         self._chanGrid.setSpacing(2)
-        self._chanGrid.setObjectName(_fromUtf8("_chanGrid"))
+        self._chanGrid.setObjectName("_chanGrid")
         self.gridLayout_21.addLayout(self._chanGrid, 0, 0, 1, 1)
         PROFILER("Channel grid", level=2)
 
@@ -183,16 +175,16 @@ class UiPanels(object):
         """Create a widget and a layout."""
         Widget = QtWidgets.QWidget(self.centralwidget)  # noqa
         Widget.setMinimumSize(QtCore.QSize(0, 0))
-        Widget.setObjectName(_fromUtf8(name_wiget))
+        Widget.setObjectName(name_wiget)
         Widget.setVisible(visible)
         vlay = QtWidgets.QVBoxLayout(Widget)
         vlay.setContentsMargins(9, 0, 9, 0)
         vlay.setSpacing(0)
-        vlay.setObjectName(_fromUtf8("vlay"))
+        vlay.setObjectName("vlay")
         # Create layout :
         Layout = QtWidgets.QVBoxLayout()  # noqa
         Layout.setSpacing(0)
-        Layout.setObjectName(_fromUtf8(name_layout))
+        Layout.setObjectName(name_layout)
         vlay.addLayout(Layout)
 
         return Widget, Layout
@@ -223,7 +215,7 @@ class UiPanels(object):
             # Add a checkbox to the scrolling panel :
             self._chanChecks[i] = QtWidgets.QCheckBox(self._PanScrollChan)
             # Name checkbox with channel name :
-            self._chanChecks[i].setObjectName(_fromUtf8("_CheckChan" + k))
+            self._chanChecks[i].setObjectName("_CheckChan" + k)
             self._chanChecks[i].setText(k)
             self._chanChecks[i].setShortcut("Ctrl+" + str(i))
             # Add checkbox to the grid :

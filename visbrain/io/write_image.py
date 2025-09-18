@@ -428,7 +428,7 @@ def write_fig_pyqt(self, filename):
     filename : string
         The picture file name.
     """
-    from PyQt5 import QtWidgets, QtCore
+    from PySide6 import QtWidgets, QtCore
 
     # Screnshot function :
     def _take_screenshot():

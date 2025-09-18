@@ -37,7 +37,7 @@ class _VisbrainShortcuts(object):
         # Key-pressed :
 
         def _save_canvas(event):
-            from PyQt5.QtWidgets import QWidget
+            from PySide6.QtWidgets import QWidget
             ext = ['png', 'tiff', 'jpg']
             _ext = ['%s file (*.%s)' % (k.upper(), k) for k in ext]
             _ext += ['All files (*.*)']

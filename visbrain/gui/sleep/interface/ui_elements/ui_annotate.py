@@ -1,6 +1,6 @@
 """Enable to annotate a Sleep file."""
 
-from PyQt5 import QtWidgets
+from PySide6 import QtWidgets
 import numpy as np
 
 

@@ -1,6 +1,6 @@
 """Usefull functions for graphical interface managment."""
 
-from PyQt5 import QtCore
+from PySide6 import QtCore
 
 import numpy as np
 
@@ -439,8 +439,8 @@ def fill_pyqt_table(table, col_names=None, col=None, df=None, filter=None,
     df : pandas.DataFrame or dict | None
         Alternatively, a pandas DataFrame or a dictionary can also be used.
     """
-    from PyQt5.QtWidgets import (QTableWidgetItem, QTableWidget, QTableView)
-    from PyQt5 import QtGui, QtCore
+    from PySide6 import QtGui, QtCore
+    from PySide6.QtWidgets import (QTableWidgetItem, QTableWidget, QTableView)
 
     # ________________________ Checking ________________________
     # Dictionary / pandas.DataFrame :
@@ -480,6 +480,7 @@ def fill_pyqt_table(table, col_names=None, col=None, df=None, filter=None,
             filt_model.setSourceModel(model)
             filt_model.setFilterKeyColumn(filter_col)
             filt_model.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
-            filter.textChanged.connect(filt_model.setFilterRegExp)
+            filter.textChanged.connect(filt_model.setFilterRegularExpression)
             table.setModel(filt_model)
+            table._visbrain_proxy_model = filt_model  # type: ignore[attr-defined]
         return model

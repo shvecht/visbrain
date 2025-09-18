@@ -1,6 +1,6 @@
 """Test functions in guitools.py."""
 import pytest
-from PyQt5 import QtWidgets, QtCore
+from PySide6 import QtWidgets, QtCore
 
 from visbrain.utils.guitools import (slider2opacity, textline2color,
                                      color2json, ndsubplot,

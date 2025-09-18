@@ -1,15 +1,13 @@
-"""All visbrain modules based on PyQt5 should inherit from _PyQtModule."""
+"""All visbrain modules based on PySide6 should inherit from _PyQtModule."""
 import logging
 from importlib import resources
 
-import sip
-from PyQt5 import QtGui
+from PySide6 import QtGui
 
 from .utils import set_widget_size, set_log_level
 from .config import PROFILER, CONFIG
 from .io import path_to_tmp, clean_tmp, path_to_visbrain_data
 
-sip.setdestroyonexit(False)
 logger = logging.getLogger('visbrain')
 
 
