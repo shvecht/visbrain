@@ -35,6 +35,32 @@ CONFIG['PYQT_APP'] = None
 CONFIG['VISPY_APP'] = None
 
 
+def _parse_bool_flag(value: str) -> bool:
+    """Return a boolean from a CLI flag value.
+
+    Accepted truthy values are ``'1'``, ``'true'``, ``'yes'``, ``'y'`` and
+    ``'on'`` (case insensitive). Accepted falsey values are the counterparts
+    ``'0'``, ``'false'``, ``'no'``, ``'n'`` and ``'off'``.
+
+    Parameters
+    ----------
+    value : str
+        The string representation of the desired boolean.
+
+    Raises
+    ------
+    ValueError
+        If *value* does not match any of the accepted representations.
+    """
+
+    normalized = value.strip().lower()
+    if normalized in {'1', 'true', 'yes', 'y', 'on'}:
+        return True
+    if normalized in {'0', 'false', 'no', 'n', 'off'}:
+        return False
+    raise ValueError(f"Unsupported boolean value: {value!r}")
+
+
 def get_qt_app(create: bool = True) -> Optional[QtWidgets.QApplication]:
     """Return the active :class:`~QtWidgets.QApplication` instance.
 
@@ -133,8 +159,16 @@ def init_config(argv):
             if o == '--visbrain-log':
                 set_log_level(a)
             if o == '--visbrain-show':
-                CONFIG['SHOW_PYQT_APP'] = eval(a)
-                logger.debug("Show PyQt app : %r" % CONFIG['SHOW_PYQT_APP'])
+                try:
+                    CONFIG['SHOW_PYQT_APP'] = _parse_bool_flag(a)
+                except ValueError:
+                    logger.error(
+                        f"Invalid value for --visbrain-show: {a}"
+                    )
+                else:
+                    logger.debug(
+                        "Show PyQt app : %r", CONFIG['SHOW_PYQT_APP']
+                    )
             if o == '--visbrain-search':
                 set_log_level(match=a)
 
