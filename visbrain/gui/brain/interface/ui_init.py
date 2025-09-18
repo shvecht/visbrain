@@ -1,12 +1,12 @@
 """This script group the diffrent graphical components.
 
 Grouped components :
-    * PyQt elements (window, Pyqt functions...)
+    * Qt elements (window, Qt functions...)
     * Vispy canvas functions
     * User shortcuts
 """
 
-from PyQt5 import QtWidgets
+from visbrain.qt import QtWidgets
 
 from vispy import app
 from vispy.scene.cameras import TurntableCamera

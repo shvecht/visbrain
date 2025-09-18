@@ -7,10 +7,12 @@ import pytest
 
 @pytest.mark.gui
 def test_module_icon_uses_packaged_resource(monkeypatch):
-    """The generic PyQt module should load icons from packaged data."""
+    """The generic Qt module should load icons from packaged data."""
 
-    pytest.importorskip("PyQt5")
-    from PyQt5 import QtWidgets
+    try:
+        from visbrain.qt import QtWidgets
+    except ImportError:
+        pytest.skip("Qt bindings are unavailable")
 
     from visbrain._pyqt_module import _PyQtModule
     from visbrain.config import CONFIG

@@ -3,7 +3,7 @@
 * dialog_save : Open a window to save a file
 * dialog_load : Open a window to load a file
 """
-from PyQt5.QtWidgets import QFileDialog, QColorDialog
+from visbrain.qt import QtWidgets
 import os
 
 from .rw_utils import safety_save
@@ -18,7 +18,7 @@ def dialog_save(self, name='Save file', default='file',
     Parameters
     ----------
     self : class
-        Class containing PyQt5 elemnets.
+        Class containing Qt elements.
     name : string | 'Save file'
         Name of the saving window.
     default : string | 'file'
@@ -36,7 +36,7 @@ def dialog_save(self, name='Save file', default='file',
     if isinstance(allext, (list, tuple)):
         allext = ';;'.join(allext)
     # Open the window :
-    file, ext = QFileDialog.getSaveFileName(self, name, default, allext)
+    file, ext = QtWidgets.QFileDialog.getSaveFileName(self, name, default, allext)
     # By default, use the extension in the ruler :
     file = os.path.splitext(str(file))[0]
     ext = os.path.splitext(str(ext))[1][0:-1].lower()
@@ -50,7 +50,7 @@ def dialog_load(self, name='Open file', default='file',
     Parameters
     ----------
     self : class
-        Class containing PyQt5 elemnets.
+        Class containing Qt elements.
     name : string | 'Save file'
         Name of the opening window.
     default : string | 'file'
@@ -65,10 +65,10 @@ def dialog_load(self, name='Open file', default='file',
         Filename for opening.
     """
     # Open the window :
-    file, _ = QFileDialog.getOpenFileName(self, name, default, allext)
+    file, _ = QtWidgets.QFileDialog.getOpenFileName(self, name, default, allext)
     return str(file)
 
 
 def dialog_color():
     """Open a QColorDialog window."""
-    return QColorDialog.getColor().name()
+    return QtWidgets.QColorDialog.getColor().name()

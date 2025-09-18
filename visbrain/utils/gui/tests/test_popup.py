@@ -1,8 +1,17 @@
 """Test functions in popup.py."""
 import pytest
-from PyQt5 import QtWidgets
+
+try:  # pragma: no cover - optional Qt bindings
+    from visbrain.qt import QtWidgets
+except ImportError:  # pragma: no cover - Qt not installed
+    QtWidgets = None
 
 from visbrain.utils.gui.popup import (ShortcutPopup, ScreenshotPopup, HelpMenu)
+
+
+pytestmark = pytest.mark.skipif(
+    QtWidgets is None, reason="Qt bindings are unavailable"
+)
 
 
 class TestPopup(object):

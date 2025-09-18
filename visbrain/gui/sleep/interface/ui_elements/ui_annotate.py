@@ -1,7 +1,8 @@
 """Enable to annotate a Sleep file."""
 
-from PyQt5 import QtWidgets
 import numpy as np
+
+from visbrain.qt import QtWidgets
 
 
 class UiAnnotate(object):

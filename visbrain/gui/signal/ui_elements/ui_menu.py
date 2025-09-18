@@ -3,8 +3,14 @@ import os
 import numpy as np
 
 from visbrain.utils import ScreenshotPopup, HelpMenu
-from visbrain.io import (dialog_save, dialog_load, write_fig_pyqt,
-                         write_fig_canvas, write_csv, write_txt)
+from visbrain.io import (
+    dialog_save,
+    dialog_load,
+    write_fig_qt,
+    write_fig_canvas,
+    write_csv,
+    write_txt,
+)
 
 
 class UiMenu(HelpMenu):
@@ -112,7 +118,7 @@ class UiScreenshot(object):
 
         if kwargs['entire']:  # Screenshot of the entire window
             self._ssGui._ss.close()
-            write_fig_pyqt(self, filename)
+            write_fig_qt(self, filename)
         elif kwargs['canvas'] in ['Grid', 'Signal']:  # Selected canvas
             # Remove unsed entries :
             if kwargs['canvas'] == 'Grid':

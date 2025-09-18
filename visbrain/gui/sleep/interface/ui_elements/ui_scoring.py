@@ -1,6 +1,6 @@
 """Main class for settings managment."""
 import numpy as np
-from PyQt5 import QtWidgets
+from visbrain.qt import QtWidgets
 
 from visbrain.utils import transient
 

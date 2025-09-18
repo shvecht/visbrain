@@ -3,11 +3,11 @@ import sys
 import getopt
 import logging
 
-from PyQt5 import QtWidgets
 from vispy import app as visapp
 
 from visbrain.utils.others import Profiler
 from visbrain.utils.logging import set_log_level
+from .qt import QtWidgets, QT_API
 
 
 # Set 'info' as the default logging level
@@ -20,7 +20,7 @@ CONFIG = {}
 # Visbrain profiler (derived from the VisPy profiler)
 PROFILER = Profiler()
 
-# PyQt application
+# Qt application
 PYQT_APP = QtWidgets.QApplication.instance()
 if PYQT_APP is None:
     PYQT_APP = QtWidgets.QApplication([''])
@@ -28,12 +28,17 @@ CONFIG['PYQT_APP'] = PYQT_APP
 CONFIG['SHOW_PYQT_APP'] = True
 
 # VisPy application
-CONFIG['VISPY_APP'] = visapp.application.Application()
+VISPY_BACKEND = QT_API.lower() if QT_API else None
+CONFIG['VISPY_BACKEND'] = VISPY_BACKEND
+CONFIG['VISPY_APP'] = visapp.application.Application(VISPY_BACKEND)
+CONFIG['QT_API'] = QT_API
 
 
 def use_app(backend_name):
     """Use a specific backend."""
-    CONFIG['VISPY_APP'] = visapp.application.Application(backend_name)
+    backend = backend_name.lower() if isinstance(backend_name, str) else backend_name
+    CONFIG['VISPY_BACKEND'] = backend
+    CONFIG['VISPY_APP'] = visapp.application.Application(backend)
 
 
 # MPL render :
@@ -44,7 +49,7 @@ try:
     ip = get_ipython()
     CONFIG['MPL_RENDER'] = True
     import vispy
-    vispy.use('PyQt5')
+    vispy.use(VISPY_BACKEND)
 except NameError:
     pass
 

@@ -23,7 +23,9 @@ continue to function.
 The pinned requirement files were refreshed to align with the metadata. PySide6
 and its companion ``shiboken6`` package anchor the runtime stack, while the
 optional extras mirror the ``pyproject.toml`` extras. ``MANIFEST.in`` will
-continue to ship the resource files consumed at runtime.
+continue to ship the resource files consumed at runtime. Contributor-facing
+documentation now references the PySide6 toolchain so setup guides match the
+packaging metadata.
 
 Developer workflow
 ------------------

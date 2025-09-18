@@ -49,23 +49,23 @@ Installation options
 Dependencies
 ------------
 
-* NumPy (>= 1.23) and SciPy (>= 1.9)
-* Matplotlib (>= 3.6)
-* VisPy (>= 0.12)
-* PySide6 (>= 6.7) and ``shiboken6``
-* PyOpenGL (>= 3.1.6)
-* Pillow (>= 9.5)
+* NumPy (>= 1.26.4) and SciPy (>= 1.11.4)
+* Matplotlib (>= 3.8.4)
+* VisPy (>= 0.13.0)
+* PySide6 (>= 6.7.1) and ``shiboken6``
+* PyOpenGL (>= 3.1.7)
+* Pillow (>= 10.3.0)
 
 Optional dependencies
 ---------------------
 
-* Pandas & xlrd : table import / export
-* Pillow : export figures
-* Nibabel : read nifti files
-* MNE-python : alternative to read sleep data files
-* Tensorpac : compute and display phase-amplitude coupling
+* Pandas (>= 2.2.2) & xlrd (>= 2.0.1) : table import / export
+* Pillow (>= 10.3.0) : export figures
+* Nibabel (>= 5.2.1) : read nifti files
+* MNE-python (>= 1.6.1) : alternative to read sleep data files
+* Tensorpac (>= 0.6.5) : compute and display phase-amplitude coupling
 * lspopt : multitaper spectrogram
-* imageio : for animated GIF export
+* imageio (>= 2.34.1) : for animated GIF export
 
 Regular installation
 --------------------

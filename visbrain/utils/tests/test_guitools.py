@@ -1,15 +1,35 @@
 """Test functions in guitools.py."""
 import pytest
-from PyQt5 import QtWidgets, QtCore
 
-from visbrain.utils.guitools import (slider2opacity, textline2color,
-                                     color2json, ndsubplot,
-                                     combo, is_color, MouseEventControl,
-                                     disconnect_all, extend_combo_list,
-                                     get_combo_list_index, safely_set_cbox,
-                                     safely_set_spin, safely_set_slider,
-                                     toggle_enable_tab, get_screen_size,
-                                     set_widget_size)
+try:  # pragma: no cover - optional Qt bindings
+    from visbrain.qt import QtWidgets, QtCore
+except ImportError:  # pragma: no cover - Qt not installed
+    QtWidgets = None
+    QtCore = None
+
+from visbrain.utils.guitools import (
+    slider2opacity,
+    textline2color,
+    color2json,
+    ndsubplot,
+    combo,
+    is_color,
+    MouseEventControl,
+    disconnect_all,
+    extend_combo_list,
+    get_combo_list_index,
+    safely_set_cbox,
+    safely_set_spin,
+    safely_set_slider,
+    toggle_enable_tab,
+    get_screen_size,
+    set_widget_size,
+)
+
+
+pytestmark = pytest.mark.skipif(
+    QtWidgets is None, reason="Qt bindings are unavailable"
+)
 
 
 class TestGuitools(object):

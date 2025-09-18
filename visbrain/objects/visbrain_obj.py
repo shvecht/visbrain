@@ -7,9 +7,17 @@ import vispy
 import vispy.visuals.transforms as vist
 
 from .scene_obj import VisbrainCanvas
-from ..io import (write_fig_canvas, dialog_save, path_to_visbrain_data,
-                  load_config_json, get_data_url_path, download_file,
-                  get_files_in_folders, mpl_preview)
+from ..io import (
+    write_fig_canvas,
+    dialog_save,
+    path_to_visbrain_data,
+    load_config_json,
+    get_data_url_path,
+    download_file,
+    get_files_in_folders,
+    mpl_preview,
+)
+from ..qt import QtWidgets
 from ..utils import color2vb, set_log_level, merge_cameras
 from ..config import CONFIG
 from ..visuals import CbarBase
@@ -37,11 +45,10 @@ class _VisbrainShortcuts(object):
         # Key-pressed :
 
         def _save_canvas(event):
-            from PyQt5.QtWidgets import QWidget
             ext = ['png', 'tiff', 'jpg']
             _ext = ['%s file (*.%s)' % (k.upper(), k) for k in ext]
             _ext += ['All files (*.*)']
-            saveas = dialog_save(QWidget(), name='Export the scene',
+            saveas = dialog_save(QtWidgets.QWidget(), name='Export the scene',
                                  default='canvas.png', allext=_ext)
             if saveas:
                 write_fig_canvas(saveas, self.canvas.canvas,

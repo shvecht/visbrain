@@ -1,7 +1,8 @@
 """VisPy canvas initialization."""
 import numpy as np
-from PyQt5 import QtWidgets
 from warnings import warn
+
+from visbrain.qt import QtWidgets
 
 import vispy.scene.cameras as viscam
 from vispy import app

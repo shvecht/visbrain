@@ -2,7 +2,7 @@
 
 - write_fig_hyp : Export the hypnogram as a figure
 - write_fig_canvas : Export a canvas as a figure
-- write_fig_pyqt : Export a GUI window as a figure
+- write_fig_qt : Export a GUI window as a figure
 """
 import os
 import logging
@@ -13,8 +13,14 @@ from ..config import CONFIG
 
 logger = logging.getLogger('visbrain')
 
-__all__ = ('write_fig_hyp', 'write_fig_spindles', 'write_fig_canvas',
-           'write_fig_pyqt', 'mpl_preview')
+__all__ = (
+    'write_fig_hyp',
+    'write_fig_spindles',
+    'write_fig_canvas',
+    'write_fig_qt',
+    'write_fig_pyqt',
+    'mpl_preview',
+)
 
 
 def write_fig_hyp(data, sf, file=None, start_s=0, grid=False, ascolor=False,
@@ -418,8 +424,8 @@ def write_fig_canvas(filename, canvas, widget=None, autocrop=False,
     logger.info("Image of size %rpx successfully saved (%s)" % (px, filename))
 
 
-def write_fig_pyqt(self, filename):
-    """Export a GUI window as a figure.
+def write_fig_qt(self, filename):
+    """Export a Qt GUI window as a figure.
 
     Parameters
     ----------
@@ -428,23 +434,44 @@ def write_fig_pyqt(self, filename):
     filename : string
         The picture file name.
     """
-    from PyQt5 import QtWidgets, QtCore
+    from ..qt import QtCore, QtGui, QtWidgets
 
-    # Screnshot function :
+    if not filename:
+        return
+
     def _take_screenshot():
-        """Take the screenshot."""
-        screen = QtWidgets.QApplication.primaryScreen()
-        p = screen.grabWindow(0)
-        p.save(filename)
-        logger.info('Image successfully saved (%s)' % filename)
-    # Take screenshot if filename :
-    if filename:
-        # Timer (avoid shooting the saving window)
-        self.timerScreen = QtCore.QTimer()
-        # self.timerScreen.setInterval(100)
-        self.timerScreen.setSingleShot(True)
-        self.timerScreen.timeout.connect(_take_screenshot)
-        self.timerScreen.start(500)
+        """Grab the active screen and persist it to ``filename``."""
+        screen = QtGui.QGuiApplication.primaryScreen()
+        if screen is None:
+            screen = QtWidgets.QApplication.primaryScreen()
+        if screen is None:
+            logger.error("No Qt screen available to capture a screenshot")
+            return
+
+        pixmap = screen.grabWindow(0)
+        image = pixmap.toImage()
+        writer = QtGui.QImageWriter(filename)
+        if not writer.canWrite():
+            logger.error("Unable to write screenshot to %s", filename)
+            return
+        if writer.write(image):
+            logger.info('Image successfully saved (%s)' % filename)
+        else:
+            logger.error(
+                "Qt failed to write screenshot %s: %s",
+                filename,
+                writer.errorString(),
+            )
+
+    # Timer (avoid shooting the saving window)
+    self.timerScreen = QtCore.QTimer()
+    self.timerScreen.setSingleShot(True)
+    self.timerScreen.timeout.connect(_take_screenshot)
+    self.timerScreen.start(500)
+
+
+# Backward compatibility ----------------------------------------------------
+write_fig_pyqt = write_fig_qt
 
 
 def mpl_preview(canvas, **kw):

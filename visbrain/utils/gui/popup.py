@@ -1,8 +1,8 @@
 """Create basic popup."""
 
-from PyQt5.Qt import QWidget, QRect
-from PyQt5 import QtWidgets, QtCore
 import webbrowser
+
+from ...qt import QtCore, QtWidgets
 
 from .screenshot_gui import Ui_Screenshot
 from ..guitools import textline2color
@@ -10,13 +10,13 @@ from ..guitools import textline2color
 __all__ = ('ShortcutPopup', 'ScreenshotPopup', 'HelpMenu')
 
 
-class ShortcutPopup(QWidget):
+class ShortcutPopup(QtWidgets.QWidget):
     """Popup window with the list of shorcuts."""
 
     def __init__(self):
         """Init."""
-        QWidget.__init__(self)
-        self.setGeometry(QRect(400, 200, 700, 600))
+        super().__init__()
+        self.setGeometry(QtCore.QRect(400, 200, 700, 600))
         layout = QtWidgets.QGridLayout(self)
         self.table = QtWidgets.QTableWidget()
         self.table.setColumnCount(2)

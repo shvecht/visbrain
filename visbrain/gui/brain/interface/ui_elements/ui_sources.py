@@ -3,7 +3,11 @@ import logging
 import numpy as np
 
 from .ui_objects import _run_method_if_needed
-from visbrain.utils import (textline2color, safely_set_cbox, fill_pyqt_table)
+from visbrain.utils import (
+    textline2color,
+    safely_set_cbox,
+    fill_qt_table,
+)
 from visbrain.io import dialog_color
 
 
@@ -40,7 +44,7 @@ class UiSources(object):
             xyz, txt = self.sources._xyz, self.sources._text
             col = np.c_[txt, xyz].T.tolist()
             col_names = ['Text', 'X', 'Y', 'Z']
-            fill_pyqt_table(self._s_table, col_names, col)
+            fill_qt_table(self._s_table, col_names, col)
             self._s_table.setEnabled(True)
         self._s_analyse_run.clicked.connect(self._fcn_analyse_sources)
         self._s_show_cs.clicked.connect(self._fcn_goto_cs)
@@ -169,7 +173,7 @@ class UiSources(object):
         roi = self._s_analyse_roi.currentText()
         logger.info("Analyse source's locations using %s ROI" % roi)
         df = self.sources.analyse_sources(roi.lower())
-        fill_pyqt_table(self._s_table, df=df)
+        fill_qt_table(self._s_table, df=df)
 
     # =====================================================================
     # PROJECTION

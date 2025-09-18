@@ -1,7 +1,7 @@
 """Main class for settings managment."""
-from PyQt5 import QtCore, QtGui, QtWidgets
-
 import numpy as np
+
+from visbrain.qt import QtCore, QtGui, QtWidgets
 
 from ..ui_init import AxisCanvas, TimeAxis
 from visbrain.utils import mpl_cmap, color2vb

@@ -5,10 +5,11 @@ commands for the user
 """
 import numpy as np
 import logging
-from PyQt5 import QtCore
+
+from visbrain.qt import QtCore
 
 from visbrain.objects.volume_obj import VOLUME_CMAPS
-from visbrain.utils import fill_pyqt_table
+from visbrain.utils import fill_qt_table
 
 
 logger = logging.getLogger('visbrain')
@@ -271,7 +272,7 @@ class UiAtlas(object):
         col_names.pop(col_names.index('index'))
         cols = [list(df[k]) for k in col_names if k not in ['', 'index']]
         # Build the table with the filter :
-        self._roiModel = fill_pyqt_table(self._roiToAdd, col_names, cols,
+        self._roiModel = fill_qt_table(self._roiToAdd, col_names, cols,
                                          filter=self._roiFilter, check=0,
                                          filter_col=0)
         # By default, uncheck items :
