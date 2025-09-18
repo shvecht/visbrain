@@ -73,6 +73,8 @@ def _path_from_bundle(file: Optional[str] = None,
         parts.append(folder)
     if file:
         parts.append(file)
+    if not parts:
+        return None
     try:
         return bundled_path(*parts)
     except FileNotFoundError:
