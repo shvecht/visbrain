@@ -11,14 +11,12 @@ from visbrain.gui import Brain
 from visbrain.objects import (SourceObj, ConnectObj, TimeSeries3DObj,
                               Picture3DObj, RoiObj, VolumeObj, CrossSecObj,
                               BrainObj)
-from visbrain.io import download_file
 from visbrain.tests._tests_visbrain import _TestVisbrain
 
 
-# Download intrcranial xyz :
-mat = np.load(download_file('xyz_sample.npz', astype='example_data'))
-xyz_full = mat['xyz']
-mat.close()
+# Generate deterministic sample coordinates
+rnd = np.random.default_rng(0)
+xyz_full = rnd.uniform(-50, 50, size=(40, 3))
 xyz_1, xyz_2 = xyz_full[20:30, :], xyz_full[10:20, :]
 
 

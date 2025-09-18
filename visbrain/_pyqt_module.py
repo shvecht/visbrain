@@ -70,7 +70,7 @@ class _PyQtModule(object):
         """Init."""
         # Log level and profiler creation (if verbose='debug')
         set_log_level(verbose)
-        path_to_visbrain_data()
+        path_to_visbrain_data(create=True, allow_bundled=False)
         self._create_tmp_folder()
         if logger.level == 10:
             import faulthandler

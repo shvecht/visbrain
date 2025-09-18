@@ -12,7 +12,7 @@ except ImportError:  # pragma: no cover - Qt not installed
     QtWidgets = None
 
 from visbrain.gui import Sleep
-from visbrain.io import download_file, path_to_visbrain_data
+from visbrain.io import path_to_visbrain_data
 from visbrain.tests._tests_visbrain import _TestVisbrain
 
 
@@ -20,17 +20,24 @@ from visbrain.tests._tests_visbrain import _TestVisbrain
 sleep_file = path_to_visbrain_data('excerpt2.edf', 'example_data')
 hypno_file = path_to_visbrain_data('Hypnogram_excerpt2.txt', 'example_data')
 
-# Download sleep file :
-if not os.path.isfile(sleep_file):
-    download_file('sleep_edf.zip', unzip=True, astype='example_data')
+# Determine availability of the optional example dataset
+DATA_MISSING = not os.path.isfile(sleep_file)
 onset = np.array([100, 2000, 5000])
 
-# Create Sleep application :
-sp = Sleep(data=sleep_file, hypno=hypno_file, axis=True, annotations=onset)
+if not DATA_MISSING:
+    sp = Sleep(data=sleep_file, hypno=hypno_file, axis=True, annotations=onset)
+else:  # pragma: no cover - exercised when dataset absent
+    sp = None
 
-pytestmark = pytest.mark.skipif(
-    QtWidgets is None, reason="Qt bindings are unavailable"
-)
+pytestmark = [
+    pytest.mark.skipif(QtWidgets is None, reason="Qt bindings are unavailable"),
+    pytest.mark.skipif(
+        DATA_MISSING,
+        reason="Sleep example dataset not installed. Run `python -m "
+        "visbrain.io.download sleep_edf.zip --type example_data --unzip` to "
+        "fetch it.",
+    ),
+]
 
 
 class TestSleep(_TestVisbrain):

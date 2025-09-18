@@ -1,9 +1,10 @@
 """Test CrossSecObj."""
 import numpy as np
+import pytest
 
 from visbrain.objects import CrossSecObj
 from visbrain.objects.tests._testing_objects import _TestObjects
-from visbrain.io import download_file, clean_tmp
+from visbrain.io import clean_tmp
 
 
 cs_obj = CrossSecObj('brodmann')
@@ -30,13 +31,19 @@ class TestCrossSecObj(_TestObjects):
 
     def test_nii_definition(self):
         """Test function nii_definition."""
-        CrossSecObj(download_file('GG-853-GM-0.7mm.nii.gz',
-                                  astype='example_data'))
+        nib = pytest.importorskip('nibabel')
+        img = nib.Nifti1Image(np.random.rand(4, 4, 4), np.eye(4))
+        path = self.to_tmp_dir('synthetic_cross.nii.gz')
+        nib.save(img, path)
+        CrossSecObj(path)
 
     def test_set_activation(self):
         """Test function set_activation."""
-        cs_obj.set_activation(download_file('GG-853-GM-0.7mm.nii.gz',
-                                            astype='example_data'))
+        nib = pytest.importorskip('nibabel')
+        img = nib.Nifti1Image(np.random.rand(4, 4, 4), np.eye(4))
+        path = self.to_tmp_dir('synthetic_activation.nii.gz')
+        nib.save(img, path)
+        cs_obj.set_activation(path)
 
     def test_highlight_sources(self):
         """Test function highlight_sources."""
@@ -44,13 +51,21 @@ class TestCrossSecObj(_TestObjects):
 
     def test_save(self):
         """Test function save."""
-        v_obj = CrossSecObj(download_file('GG-853-GM-0.7mm.nii.gz',
-                                          astype='example_data'))
+        nib = pytest.importorskip('nibabel')
+        img = nib.Nifti1Image(np.random.rand(4, 4, 4), np.eye(4))
+        path = self.to_tmp_dir('synthetic_cross_save.nii.gz')
+        nib.save(img, path)
+        v_obj = CrossSecObj(path)
         v_obj.save()
         v_obj.save(tmpfile=True)
 
     def test_remove(self):
         """Test function remove."""
-        v_obj = CrossSecObj('GG-853-GM-0.7mm')
+        nib = pytest.importorskip('nibabel')
+        img = nib.Nifti1Image(np.random.rand(4, 4, 4), np.eye(4))
+        path = self.to_tmp_dir('synthetic_cross_remove.nii.gz')
+        nib.save(img, path)
+        v_obj = CrossSecObj(path)
+        v_obj.save()
         v_obj.remove()
         clean_tmp()

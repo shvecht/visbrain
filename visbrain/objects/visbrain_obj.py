@@ -101,7 +101,7 @@ class _VisbrainObj(CbarBase, _VisbrainShortcuts):
 
     def _df_get_tmp_folder(self):
         """Get the tmp associated folder."""
-        vb_path = path_to_visbrain_data()
+        vb_path = path_to_visbrain_data(create=True, allow_bundled=False)
         return os.path.join(*(vb_path, 'tmp', self._data_folder))
 
     def _df_get_downloaded(self, **kwargs):
@@ -115,9 +115,16 @@ class _VisbrainObj(CbarBase, _VisbrainShortcuts):
     def _df_get_file(self, file, download=True):
         """Get the path to a file or download it if needed."""
         is_dl = self._df_is_downloaded(file)
-        if not is_dl and download:
-            assert self._df_is_downloadable(file)
-            self._df_download_file(file)
+        if not is_dl:
+            if download and self._df_is_downloadable(file):
+                raise FileNotFoundError(
+                    f"Visbrain dataset '{file}' is not installed. "
+                    "Run `python -m visbrain.io.download "
+                    f"{file} --type {self._data_folder}` to fetch it."
+                )
+            raise FileNotFoundError(
+                f"Data file '{file}' not available in {self._data_folder_path}."
+            )
         # Find if the file is in _data_folder or in tmp :
         if file in os.listdir(self._data_folder_path):
             use_path = self._data_folder_path
@@ -142,7 +149,8 @@ class _VisbrainObj(CbarBase, _VisbrainShortcuts):
             raise ValueError("data_folder can only be set once.")
         assert isinstance(value, str)
         # Create the directory if it doesn't exist :
-        full_path = path_to_visbrain_data(folder=value)
+        full_path = path_to_visbrain_data(folder=value, create=True,
+                                          allow_bundled=False)
         if not os.path.exists(full_path):
             os.makedirs(full_path)
             logger.info("%s folder created" % full_path)

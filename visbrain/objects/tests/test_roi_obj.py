@@ -3,8 +3,7 @@ import numpy as np
 
 from visbrain.objects.tests._testing_objects import _TestVolumeObject
 from visbrain.objects import SourceObj, RoiObj
-from visbrain.io import (download_file, path_to_visbrain_data, read_nifti,
-                         clean_tmp)
+from visbrain.io import path_to_visbrain_data, clean_tmp
 
 
 roi_obj = RoiObj('brodmann')
@@ -15,23 +14,12 @@ xyz[:, 0] -= 50.
 xyz[:, 1] -= 50.
 s_obj = SourceObj('S1', xyz)
 
-download_file('MIST_ROI.zip', unzip=True, astype='example_data')
-nifti_file = path_to_visbrain_data('MIST_ROI.nii.gz', 'example_data')
-csv_file = path_to_visbrain_data('MIST_ROI.csv', 'example_data')
-# Read the .csv file :
-arr = np.genfromtxt(csv_file, delimiter=';', dtype=str)
-# Get column names, labels and index :
-column_names = arr[0, :]
-arr = np.delete(arr, 0, 0)
-n_roi = arr.shape[0]
-roi_index = arr[:, 0].astype(int)
-roi_labels = arr[:, [1, 2]].astype(object)
-# Build the struct array :
-label = np.zeros(n_roi, dtype=[('label', object), ('name', object)])
-label['label'] = roi_labels[:, 0]
-label['name'] = roi_labels[:, 1]
-# Get the volume and the hdr transformation :
-vol, _, hdr = read_nifti(nifti_file, hdr_as_array=True)
+arch = np.load(path_to_visbrain_data('brodmann.npz', 'roi'))
+vol = arch['vol']
+hdr = arch['hdr']
+roi_index = arch['index']
+label = arch['labels']
+n_roi = len(roi_index)
 
 
 class TestRoiObj(_TestVolumeObject):
@@ -43,9 +31,13 @@ class TestRoiObj(_TestVolumeObject):
         """Test function definition."""
         # Default :
         _ = [RoiObj(k) for k in ['aal', 'talairach', 'brodmann']]  # noqa
-        # MIST :
+        # MIST datasets now require an explicit fetch step
+        import pytest
+
         levels = [7, 12, 20, 36, 64, 122, 'ROI']
-        _ = [RoiObj('mist_%s' % str(k)) for k in levels]  # noqa
+        for level in levels:
+            with pytest.raises(FileNotFoundError):
+                RoiObj(f'mist_{level}')
 
     def test_get_labels(self):
         """Test function get_labels."""

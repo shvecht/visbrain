@@ -417,7 +417,7 @@ Alternatively, if you prefer point-per-second encoding, you can save your data i
 
 
 .. important::
-   If your hypnogram was created using another software, and is encoded in point-per-second, it is important that Sleep knows which value is associated with each sleep stage (e.g. 2 = N2 sleep, 4 = REM sleep). To do that, you need to create a simple text file in the same directory as the original hypnogram file,  named: *HYPNOFILENAME_description.txt*. Checkout this `example <https://drive.google.com/file/d/0B6vtJiCQZUBvYUFnQS1HWHhjSkE/view?usp=sharing>`_.
+   If your hypnogram was created using another software, and is encoded in point-per-second, it is important that Sleep knows which value is associated with each sleep stage (e.g. 2 = N2 sleep, 4 = REM sleep). To do that, you need to create a simple text file in the same directory as the original hypnogram file,  named: *HYPNOFILENAME_description.txt*. A template named ``Hypnogram_description_template.txt`` ships with Visbrain and can be located with ``path_to_visbrain_data(..., folder='example_data')``.
 
    **This text file should contain the following information :**
 
@@ -813,7 +813,13 @@ If the interface is opened, load annotations from the menu *Files > Load > Annot
 Annotations in a text file
 ++++++++++++++++++++++++++
 
-Annotations can be defined in a `csv file <https://drive.google.com/file/d/0B6vtJiCQZUBvSXpmS0FGZ1E4M1U/view?usp=sharing>`_ or in a `txt file <https://drive.google.com/file/d/0B6vtJiCQZUBvOENtTks1Z3NLam8/view?usp=sharing>`_ file.
+Annotations can be defined in plain-text or comma-separated tables. Minimal
+templates (``Sleep_annotations_template.txt`` / ``Sleep_annotations_template.csv``)
+are bundled with Visbrain and can be located via
+``path_to_visbrain_data(..., folder='example_data')``. The optional
+``sleep_rec.zip`` archive, downloadable with ``python -m visbrain.io.download
+sleep_rec.zip --type example_data``, contains richer recordings and matching
+annotation files.
 
 .. code-block:: python
 

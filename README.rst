@@ -82,3 +82,21 @@ Install Visbrain :
 
     pip install -U visbrain
 
+Sample data and optional downloads
++++++++++++++++++++++++++++++++++
+
+The Visbrain wheel bundles small reference datasets so common workflows run
+offline: core brain templates, ROI atlases, an EEG montage and a short
+hypnogram are available through ``visbrain.io.path_to_visbrain_data`` without
+creating ``~/visbrain_data``. Heavier assets (extended sleep recordings, large
+surface meshes, etc.) stay optional and are fetched explicitly with the
+``visbrain.io.download`` helper::
+
+    python -m visbrain.io.download --list
+    python -m visbrain.io.download sleep_rec.zip --type example_data
+
+Downloads land in a platform-specific cache or the location configured via the
+``VISBRAIN_DATA_DIR`` environment variable. The command exposes ``--dest`` and
+``--use-pwd`` switches to override the target directory when integrating with
+project-specific storage.
+

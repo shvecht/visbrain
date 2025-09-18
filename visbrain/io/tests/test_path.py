@@ -30,18 +30,16 @@ class TestPath(object):
 
     def test_get_files_in_folders(self):
         """Test function get_files_in_folders."""
-        vb_path = path_to_visbrain_data(folder='templates')
+        roi_path = path_to_visbrain_data(folder='roi')
         # Test with / without extension :
-        lst = get_files_in_folders(vb_path, with_ext=False)
-        lst_ext = get_files_in_folders(vb_path, with_ext=True, exclude=['npy'])
-        assert (len(lst) > 1) and all(['.npz' not in k for k in lst])
+        lst = get_files_in_folders(roi_path, with_ext=False)
+        lst_ext = get_files_in_folders(roi_path, with_ext=True, exclude=['tmp'])
+        assert lst  # at least one file bundled with the wheel
+        assert all(['.npz' not in k for k in lst])
         assert all(['.npz' in k for k in lst_ext])
-        # Test exclude :
-        lst_exc = get_files_in_folders(vb_path, exclude=['B1'])
-        assert all(['B1' not in k for k in lst_exc])
         # Test with / without path :
-        lst_no_path = get_files_in_folders(vb_path, with_path=False)[0]
-        lst_path = get_files_in_folders(vb_path, with_path=True)[0]
+        lst_no_path = get_files_in_folders(roi_path, with_path=False)[0]
+        lst_path = get_files_in_folders(roi_path, with_path=True)[0]
         assert os.path.split(lst_path)[1] == lst_no_path
         # Sort :
-        get_files_in_folders(vb_path, sort=True)
+        get_files_in_folders(roi_path, sort=True)

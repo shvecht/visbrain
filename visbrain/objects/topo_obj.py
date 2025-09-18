@@ -1,5 +1,6 @@
 """Base class for objects of type connectivity."""
 import logging
+import os
 
 import numpy as np
 from scipy.interpolate import interp2d
@@ -10,7 +11,7 @@ import vispy.visuals.transforms as vist
 
 from .visbrain_obj import VisbrainObject
 from ..objects import ConnectObj
-from ..io import download_file, is_sc_image_installed
+from ..io import path_to_visbrain_data, is_sc_image_installed
 from ..utils import (array2colormap, color2vb, mpl_cmap, normalize,
                      vpnormalize, vprecenter)
 
@@ -455,7 +456,13 @@ class TopoObj(VisbrainObject):
             List of channel names.
         """
         # Load the coordinates template :
-        path = download_file('eegref.npz', astype='topo')
+        path = path_to_visbrain_data('eegref.npz', 'topo')
+        if not os.path.isfile(path):
+            raise FileNotFoundError(
+                "Topography reference 'eegref.npz' not installed. Run "
+                "`python -m visbrain.io.download eegref.npz --type topo` to "
+                "fetch it."
+            )
         file = np.load(path)
         name_ref, xyz_ref = file['chan'], file['xyz']
         keeponly = np.ones((len(chan)), dtype=bool)

@@ -79,6 +79,9 @@ include = ["visbrain", "visbrain.*"]
 visbrain = [
     "data_url.json",
     "resources/icons/*.svg",
+    "data/**/*.txt",
+    "data/**/*.npy",
+    "data/**/*.npz",
 ]
 
 [tool.setuptools.dynamic]

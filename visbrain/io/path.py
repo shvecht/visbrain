@@ -1,7 +1,16 @@
-"""Set of functions for path definitions."""
+"""Utilities for locating Visbrain data resources."""
+
+from __future__ import annotations
+
 import logging
 import os
-from pkg_resources import resource_filename
+import sys
+from pathlib import Path
+from typing import Optional
+
+from importlib import resources
+
+from visbrain.data import bundled_path
 
 logger = logging.getLogger('visbrain')
 
@@ -10,8 +19,69 @@ __all__ = ['path_to_visbrain_data', 'get_files_in_folders', 'path_to_tmp',
            'clean_tmp', 'get_data_url_path']
 
 
-def path_to_visbrain_data(file=None, folder=None):
-    """Get the path to the visbrain_data folder.
+_ENV_DATA_HOME = "VISBRAIN_DATA_DIR"
+
+
+def _platform_data_home() -> Path:
+    """Return the default writable data directory for Visbrain."""
+
+    home = Path.home()
+    if sys.platform.startswith("win"):
+        root = Path(os.environ.get("APPDATA", home / "AppData" / "Roaming"))
+        return root / "Visbrain"
+    if sys.platform == "darwin":
+        return home / "Library" / "Application Support" / "Visbrain"
+    xdg = os.environ.get("XDG_DATA_HOME")
+    base = Path(xdg) if xdg else home / ".local" / "share"
+    return base / "visbrain"
+
+
+def _data_home(create: bool = False) -> Path:
+    """Return the writable data directory, honoring the override env var."""
+
+    root = Path(os.environ.get(_ENV_DATA_HOME, "")).expanduser()
+    if not root:
+        root = _platform_data_home()
+    if create:
+        root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
+def _path_from_home(file: Optional[str] = None, folder: Optional[str] = None,
+                    create: bool = False) -> Path:
+    """Build a path inside the writable data directory."""
+
+    base = _data_home(create=create or bool(folder))
+    if folder:
+        base = base / folder
+        if create:
+            base.mkdir(parents=True, exist_ok=True)
+    if file:
+        target = base / file
+        if create:
+            target.parent.mkdir(parents=True, exist_ok=True)
+        return target
+    return base
+
+
+def _path_from_bundle(file: Optional[str] = None,
+                      folder: Optional[str] = None) -> Optional[Path]:
+    """Resolve a path from bundled resources if present."""
+
+    parts = []
+    if folder:
+        parts.append(folder)
+    if file:
+        parts.append(file)
+    try:
+        return bundled_path(*parts)
+    except FileNotFoundError:
+        return None
+
+
+def path_to_visbrain_data(file=None, folder=None, *, create=False,
+                          allow_bundled=True):
+    """Get the path to visbrain resources or writable storage.
 
     Parameters
     ----------
@@ -20,26 +90,41 @@ def path_to_visbrain_data(file=None, folder=None):
     file : string | None
         File name. If None, only the path to the visbrain_data folder is
         returned.
+    create : bool | False
+        Create the folder on the filesystem if it does not already exist.
+    allow_bundled : bool | True
+        Allow returning a path to a packaged resource if available.
 
     Returns
     -------
     path : string
-        Path to the file or to the visbrain_data.
+        Path to the file or directory.
     """
-    vb_path = os.path.join(os.path.expanduser('~'), 'visbrain_data')
-    folder = '' if not isinstance(folder, str) else folder
-    vb_path = os.path.join(vb_path, folder)
-    if not os.path.exists(vb_path):
-        os.makedirs(vb_path)
-        logger.info("visbrain_data has been added to %s" % vb_path)
-    file = '' if not isinstance(file, str) else file
-    return os.path.join(vb_path, file)
+    file = None if not isinstance(file, str) else file
+    folder = None if not isinstance(folder, str) else folder
+
+    if allow_bundled:
+        bundled = _path_from_bundle(file=file, folder=folder)
+        if bundled is not None:
+            return str(bundled)
+
+    path = _path_from_home(file=file, folder=folder, create=create)
+    if create and not path.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if file:
+            path.touch(exist_ok=True)
+    if not path.exists() and not create and file:
+        logger.debug("Requested visbrain data file missing: %s", path)
+    return str(path)
 
 
 def get_data_url_path():
     """Get the path to the data_url JSON file."""
-    data_url_filepath = resource_filename('visbrain', 'data_url.json')
-    return data_url_filepath
+    traversable = resources.files('visbrain').joinpath('data_url.json')
+    if not traversable.exists():  # pragma: no cover - packaging error
+        raise FileNotFoundError('visbrain/data_url.json resource missing')
+    with resources.as_file(traversable) as path:
+        return str(path)
 
 
 def get_files_in_folders(*args, with_ext=False, with_path=False, file=None,
@@ -105,20 +190,20 @@ def get_files_in_folders(*args, with_ext=False, with_path=False, file=None,
 
 def path_to_tmp(file=None, folder=None):
     """Get the path to the tmp folder."""
-    tmp_path = os.path.join(path_to_visbrain_data(), 'tmp')
-    if not os.path.exists(tmp_path):
-        os.mkdir(tmp_path)
-    folder = '' if not isinstance(folder, str) else folder
-    file = '' if not isinstance(file, str) else file
-    tmp_path = os.path.join(tmp_path, folder)
-    if not os.path.exists(tmp_path):
-        os.mkdir(tmp_path)
-    return os.path.join(tmp_path, file)
+    tmp_path = _path_from_home(folder='tmp', create=True)
+    folder = None if not isinstance(folder, str) else folder
+    file = None if not isinstance(file, str) else file
+    if folder:
+        tmp_path = tmp_path / folder
+        tmp_path.mkdir(parents=True, exist_ok=True)
+    if file:
+        return str(tmp_path / file)
+    return str(tmp_path)
 
 
 def clean_tmp():
     """Clean the tmp folder."""
-    tmp_path = os.path.join(path_to_visbrain_data(), 'tmp')
-    if os.path.exists(tmp_path):
+    tmp_path = _path_from_home(folder='tmp')
+    if tmp_path.exists():
         import shutil
         shutil.rmtree(tmp_path)
