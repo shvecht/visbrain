@@ -14,7 +14,7 @@ class TestPath(object):
 
     def test_path_to_visbrain_data(self):
         """Test function path_to_visbrain_data."""
-        path = path_to_visbrain_data()
+        path = path_to_visbrain_data(create=True, allow_bundled=False)
         assert os.path.isdir(path)
 
     def test_path_to_tmp(self):
