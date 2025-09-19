@@ -25,7 +25,7 @@ def test_module_icon_uses_packaged_resource(monkeypatch):
             _PyQtModule.__init__(self, icon="brain_icon.svg", show_settings=False)
 
     # Guard against accidental GUI execution inside tests.
-    monkeypatch.setitem(CONFIG, "SHOW_PYQT_APP", False)
+    monkeypatch.setattr(CONFIG, "show_pyqt_app", False)
 
     window = DummyWindow()
     window.show()

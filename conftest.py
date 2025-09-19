@@ -29,7 +29,7 @@ except Exception:  # pragma: no cover - defensive in CI without GUI libs
 else:
     # Prevent Visbrain from attempting to display PyQt applications during
     # tests when the GUI stack is available.
-    CONFIG["SHOW_PYQT_APP"] = False
+    CONFIG.show_pyqt_app = False
 
 # Paths whose tests should automatically be marked as requiring a GUI stack.
 _REPO_ROOT = Path(__file__).parent.resolve()

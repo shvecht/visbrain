@@ -407,7 +407,7 @@ def write_fig_canvas(filename, canvas, widget=None, autocrop=False,
     canvas.bgcolor = backup_bgcolor
 
     # Matplotlib render :
-    if CONFIG['MPL_RENDER'] or not isinstance(filename, str):
+    if CONFIG.mpl_render or not isinstance(filename, str):
         return img
 
     # Remove alpha for files that are not png or tiff :

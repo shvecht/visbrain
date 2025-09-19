@@ -1,128 +1,180 @@
-"""Visbrain configurations."""
+"""Configuration and runtime helpers for Visbrain."""
 from __future__ import annotations
 
 import getopt
 import logging
-import sys
-from typing import Optional
+from typing import Optional, Sequence
 
 from vispy import app as visapp
 
 from visbrain.utils.logging import set_log_level
 from visbrain.utils.others import Profiler
+
 from .qt import QT_API, QtWidgets
 
 
-# Set 'info' as the default logging level
-logger = logging.getLogger('visbrain')
-set_log_level('info')
+logger = logging.getLogger("visbrain")
+set_log_level("info")
 
-# Configuration dict
-CONFIG: dict[str, object] = {}
+
+class ConfigManager:
+    """Container for runtime configuration and GUI application handles."""
+
+    qt_api: str | None
+    vispy_backend: str | None
+    show_pyqt_app: bool
+    mpl_render: bool
+    pyqt_app: Optional[QtWidgets.QApplication]
+    vispy_app: Optional[visapp.Application]
+
+    def __init__(self, qt_api: str | None = QT_API) -> None:
+        self.qt_api = qt_api
+        self.vispy_backend = qt_api.lower() if isinstance(qt_api, str) else qt_api
+        self.show_pyqt_app = True
+        self.mpl_render = False
+        self.pyqt_app = None
+        self.vispy_app = None
+
+    def copy(self) -> ConfigManager:
+        """Return a shallow copy of the configuration manager."""
+
+        duplicate = ConfigManager(self.qt_api)
+        duplicate.vispy_backend = self.vispy_backend
+        duplicate.show_pyqt_app = self.show_pyqt_app
+        duplicate.mpl_render = self.mpl_render
+        duplicate.pyqt_app = self.pyqt_app
+        duplicate.vispy_app = self.vispy_app
+        return duplicate
+
+    # ------------------------------------------------------------------
+    # Qt application helpers
+    # ------------------------------------------------------------------
+    def get_qt_app(
+        self, *, create: bool = True, force: bool = False
+    ) -> Optional[QtWidgets.QApplication]:
+        """Return the active :class:`~QtWidgets.QApplication` instance."""
+
+        app = QtWidgets.QApplication.instance()
+        if app is None:
+            if not create or (not self.show_pyqt_app and not force):
+                self.pyqt_app = None
+                return None
+            app = QtWidgets.QApplication([""])
+
+        self.pyqt_app = app
+        return app
+
+    # ------------------------------------------------------------------
+    # VisPy application helpers
+    # ------------------------------------------------------------------
+    def get_vispy_app(
+        self,
+        backend: Optional[str] = None,
+        *,
+        create: bool = True,
+        force: bool = False,
+    ) -> Optional[visapp.Application]:
+        """Return the active :class:`vispy.app.Application` instance."""
+
+        if backend is not None:
+            normalized = backend.lower() if isinstance(backend, str) else backend
+            if normalized != self.vispy_backend:
+                self.vispy_backend = normalized
+                self.vispy_app = None
+
+        if self.vispy_app is not None:
+            return self.vispy_app
+
+        if not create or (not self.show_pyqt_app and not force):
+            return None
+
+        self.vispy_app = visapp.application.Application(self.vispy_backend)
+        return self.vispy_app
+
+    def use_app(self, backend_name):
+        """Force VisPy to use a specific backend."""
+
+        normalized = (
+            backend_name.lower() if isinstance(backend_name, str) else backend_name
+        )
+        self.vispy_backend = normalized
+        self.vispy_app = visapp.application.Application(normalized)
+        return self.vispy_app
+
+
+# Global configuration handle exposed to consumers of :mod:`visbrain.config`.
+CONFIG = ConfigManager()
 
 # Visbrain profiler (derived from the VisPy profiler)
 PROFILER = Profiler()
 
-# Lazily created application instances
-_QT_APP: Optional[QtWidgets.QApplication] = None
-_VISPY_APP: Optional[visapp.Application] = None
-
-# Backend metadata
-CONFIG['QT_API'] = QT_API
-CONFIG['VISPY_BACKEND'] = QT_API.lower() if QT_API else None
-CONFIG['SHOW_PYQT_APP'] = True
-CONFIG['PYQT_APP'] = None
-CONFIG['VISPY_APP'] = None
-
 
 def _parse_bool_flag(value: str) -> bool:
-    """Return a boolean from a CLI flag value.
-
-    Accepted truthy values are ``'1'``, ``'true'``, ``'yes'``, ``'y'`` and
-    ``'on'`` (case insensitive). Accepted falsey values are the counterparts
-    ``'0'``, ``'false'``, ``'no'``, ``'n'`` and ``'off'``.
-
-    Parameters
-    ----------
-    value : str
-        The string representation of the desired boolean.
-
-    Raises
-    ------
-    ValueError
-        If *value* does not match any of the accepted representations.
-    """
+    """Return a boolean from a CLI flag value."""
 
     normalized = value.strip().lower()
-    if normalized in {'1', 'true', 'yes', 'y', 'on'}:
+    if normalized in {"1", "true", "yes", "y", "on"}:
         return True
-    if normalized in {'0', 'false', 'no', 'n', 'off'}:
+    if normalized in {"0", "false", "no", "n", "off"}:
         return False
     raise ValueError(f"Unsupported boolean value: {value!r}")
 
 
-def get_qt_app(create: bool = True) -> Optional[QtWidgets.QApplication]:
-    """Return the active :class:`~QtWidgets.QApplication` instance.
+def get_qt_app(
+    create: bool = True, *, force: bool = False
+) -> Optional[QtWidgets.QApplication]:
+    """Return (and optionally create) the Qt application instance."""
 
-    Parameters
-    ----------
-    create : bool
-        When ``True`` (the default) a new :class:`~QtWidgets.QApplication`
-        instance is created if none exists. When ``False`` the function returns
-        ``None`` if a Qt application has not been created yet.
-    """
-
-    global _QT_APP
-
-    app = QtWidgets.QApplication.instance()
-    if app is None and create:
-        app = QtWidgets.QApplication([''])
-
-    if app is not None:
-        _QT_APP = app
-        CONFIG['PYQT_APP'] = app
-    return app
+    return CONFIG.get_qt_app(create=create, force=force)
 
 
-def get_vispy_app(backend: Optional[str] = None) -> visapp.Application:
-    """Return the global :class:`vispy.app.Application` instance."""
+def ensure_qt_app(*, force: bool = False) -> Optional[QtWidgets.QApplication]:
+    """Ensure a Qt application exists, respecting the headless flag."""
 
-    global _VISPY_APP
+    return CONFIG.get_qt_app(create=True, force=force)
 
-    if backend is not None:
-        use_app(backend)
 
-    if _VISPY_APP is None:
-        backend_name = CONFIG.get('VISPY_BACKEND')
-        _VISPY_APP = visapp.application.Application(backend_name)
-        CONFIG['VISPY_APP'] = _VISPY_APP
-    return _VISPY_APP
+def get_vispy_app(
+    backend: Optional[str] = None,
+    *,
+    create: bool = True,
+    force: bool = False,
+) -> Optional[visapp.Application]:
+    """Return (and optionally create) the VisPy application instance."""
+
+    return CONFIG.get_vispy_app(backend=backend, create=create, force=force)
+
+
+def ensure_vispy_app(
+    backend: Optional[str] = None, *, force: bool = False
+) -> Optional[visapp.Application]:
+    """Ensure a VisPy application exists, respecting the headless flag."""
+
+    return CONFIG.get_vispy_app(backend=backend, create=True, force=force)
 
 
 def use_app(backend_name):
-    """Use a specific backend."""
-    backend = backend_name.lower() if isinstance(backend_name, str) else backend_name
-    CONFIG['VISPY_BACKEND'] = backend
-    global _VISPY_APP
-    _VISPY_APP = visapp.application.Application(backend)
-    CONFIG['VISPY_APP'] = _VISPY_APP
-    return _VISPY_APP
+    """Use a specific VisPy backend."""
+
+    return CONFIG.use_app(backend_name)
 
 
-# MPL render :
-CONFIG['MPL_RENDER'] = False
+# Matplotlib rendering defaults to disabled until explicitly enabled.
+CONFIG.mpl_render = False
 
-# Jupyter / iPython :
+# Jupyter / iPython detection enables Matplotlib rendering automatically.
 try:
     ip = get_ipython()
-    CONFIG['MPL_RENDER'] = True
-    import vispy
-
-    vispy.use(CONFIG['VISPY_BACKEND'])
 except NameError:
-    pass
+    ip = None  # pragma: no cover - IPython not available
+else:
+    if ip is not None:  # pragma: no branch - executed only in notebooks
+        CONFIG.mpl_render = True
+        import vispy
 
-# Input command line arguments
+        vispy.use(CONFIG.vispy_backend)
+
+
 VISBRAIN_HELP = """
 Visbrain command line arguments:
 
@@ -141,35 +193,51 @@ Visbrain command line arguments:
 """
 
 
-def init_config(argv):
-    """Initialize visbrain configuration."""
-    global CONFIG
+def parse_cli(
+    argv: Sequence[str], config: ConfigManager | None = None
+) -> ConfigManager:
+    """Parse Visbrain CLI flags from *argv* and return the resulting config."""
 
-    argnames = ['visbrain-log=', 'visbrain-show=', 'visbrain-help',
-                'visbrain-search=']
+    cfg = config if config is not None else ConfigManager()
+    argnames = [
+        "visbrain-log=",
+        "visbrain-show=",
+        "visbrain-help",
+        "visbrain-search=",
+    ]
     try:
-        opts, args = getopt.getopt(sys.argv[1:], '', argnames)
+        opts, _ = getopt.getopt(list(argv), "", argnames)
     except getopt.GetoptError:
         opts = []
 
-    for o, a in opts:
-        if o.startswith('--visbrain'):
-            if o == '--visbrain-help':
-                print(VISBRAIN_HELP)
-            if o == '--visbrain-log':
-                set_log_level(a)
-            if o == '--visbrain-show':
-                try:
-                    CONFIG['SHOW_PYQT_APP'] = _parse_bool_flag(a)
-                except ValueError:
-                    logger.error(
-                        f"Invalid value for --visbrain-show: {a}"
-                    )
-                else:
-                    logger.debug(
-                        "Show PyQt app : %r", CONFIG['SHOW_PYQT_APP']
-                    )
-            if o == '--visbrain-search':
-                set_log_level(match=a)
+    for option, argument in opts:
+        if not option.startswith("--visbrain"):
+            continue
+        if option == "--visbrain-help":
+            print(VISBRAIN_HELP)
+            continue
+        if option == "--visbrain-log":
+            set_log_level(argument)
+            continue
+        if option == "--visbrain-show":
+            try:
+                cfg.show_pyqt_app = _parse_bool_flag(argument)
+            except ValueError:
+                logger.error("Invalid value for --visbrain-show: %s", argument)
+            else:
+                logger.debug("Show PyQt app : %r", cfg.show_pyqt_app)
+            continue
+        if option == "--visbrain-search":
+            set_log_level(match=argument)
 
-init_config(sys.argv[1:])  # noqa
+    return cfg
+
+
+def init_config(argv: Sequence[str]) -> ConfigManager:
+    """Backward compatible wrapper around :func:`parse_cli`."""
+
+    logger.warning(
+        "init_config is deprecated; call parse_cli(...) instead.",
+    )
+    return parse_cli(argv, CONFIG)
+

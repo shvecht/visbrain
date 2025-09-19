@@ -24,7 +24,7 @@ except ImportError:  # pragma: no cover - shiboken missing
     shiboken6 = None
 
 from .utils import set_widget_size, set_log_level
-from .config import CONFIG, PROFILER, get_qt_app, get_vispy_app
+from .config import CONFIG, PROFILER, ensure_qt_app, ensure_vispy_app
 from .io import path_to_tmp, clean_tmp, path_to_visbrain_data
 
 logger = logging.getLogger('visbrain')
@@ -113,8 +113,9 @@ class _PyQtModule(object):
     def show(self):
         """Display the graphical user interface."""
         # Fixed size for the settings panel :
-        if hasattr(self, 'q_widget'):
-            set_widget_size(get_qt_app(), self.q_widget, 23)
+        app = ensure_qt_app()
+        if hasattr(self, 'q_widget') and app is not None:
+            set_widget_size(app, self.q_widget, 23)
             self.q_widget.setVisible(self._show_settings)
         # Force the quick settings tab to be on the first tab :
         if hasattr(self, 'QuickSettings'):
@@ -148,15 +149,17 @@ class _PyQtModule(object):
             self._pyqt_title('Profiler', '')
             PROFILER.finish()
         # If PyQt GUI :
-        if CONFIG['SHOW_PYQT_APP']:
+        if CONFIG.show_pyqt_app:
             self.showMaximized()
-            get_vispy_app().run()
+            vispy_app = ensure_vispy_app()
+            if vispy_app is not None:
+                vispy_app.run()
         # Finally clean the tmp folder :
         self._clean_tmp_folder()
 
     def closeEvent(self, event):  # noqa
         """Executed method when the GUI closed."""
-        app = get_qt_app(create=False)
+        app = CONFIG.get_qt_app(create=False)
         if app is not None:
             app.quit()
         logger.debug("App closed.")
