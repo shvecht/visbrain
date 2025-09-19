@@ -40,18 +40,20 @@ def test_import_has_no_side_effects(monkeypatch):
     monkeypatch.setattr(qt_mod.QtWidgets, "QApplication", DummyQApplication)
     monkeypatch.setattr(vispy.app.application, "Application", DummyVispyApplication)
 
-    cfg = _reload_config()
+    cfg_mod = _reload_config()
+    cfg = cfg_mod.get_config()
 
     assert DummyQApplication.created == 0
     assert DummyVispyApplication.created == 0
-    assert cfg.CONFIG.pyqt_app is None
-    assert cfg.CONFIG.vispy_app is None
+    assert cfg.pyqt_app is None
+    assert cfg.vispy_app is None
 
 
 def test_ensure_helpers_respect_headless_flag(monkeypatch):
     """Application helpers must honour the ``show_pyqt_app`` toggle."""
 
-    cfg = _reload_config()
+    cfg_mod = _reload_config()
+    cfg = cfg_mod.get_config()
 
     class DummyQApplication:
         created = 0
@@ -72,56 +74,70 @@ def test_ensure_helpers_respect_headless_flag(monkeypatch):
             DummyVispyApplication.created += 1
             self.backend = backend
 
-    monkeypatch.setattr(cfg.QtWidgets, "QApplication", DummyQApplication)
-    monkeypatch.setattr(cfg.visapp.application, "Application", DummyVispyApplication)
+    monkeypatch.setattr(cfg_mod.QtWidgets, "QApplication", DummyQApplication)
+    monkeypatch.setattr(
+        cfg_mod.visapp.application, "Application", DummyVispyApplication
+    )
 
-    cfg.CONFIG.show_pyqt_app = False
+    cfg.show_pyqt_app = False
     DummyQApplication._instance = None
 
-    assert cfg.ensure_qt_app() is None
+    assert cfg_mod.ensure_qt_app() is None
     assert DummyQApplication.created == 0
 
-    forced_qapp = cfg.ensure_qt_app(force=True)
+    forced_qapp = cfg_mod.ensure_qt_app(force=True)
     assert isinstance(forced_qapp, DummyQApplication)
     assert DummyQApplication.created == 1
-    assert cfg.CONFIG.pyqt_app is forced_qapp
+    assert cfg.pyqt_app is forced_qapp
 
-    cfg.CONFIG.pyqt_app = None
+    cfg.pyqt_app = None
     DummyVispyApplication.created = 0
 
-    assert cfg.ensure_vispy_app() is None
+    assert cfg_mod.ensure_vispy_app() is None
     assert DummyVispyApplication.created == 0
 
-    forced_vispy = cfg.ensure_vispy_app(force=True)
+    forced_vispy = cfg_mod.ensure_vispy_app(force=True)
     assert isinstance(forced_vispy, DummyVispyApplication)
-    assert forced_vispy.backend == cfg.CONFIG.vispy_backend
+    assert forced_vispy.backend == cfg.vispy_backend
 
 
-def test_parse_cli_uses_provided_arguments(monkeypatch, caplog):
+def test_configure_from_argv_updates_runtime(monkeypatch, caplog):
     """CLI parsing should rely solely on the provided ``argv`` sequence."""
 
-    cfg = _reload_config()
+    cfg_mod = _reload_config()
+    cfg = cfg_mod.get_config()
 
-    baseline = cfg.CONFIG.copy()
+    baseline = cfg.copy()
 
     # Pretend the runtime was invoked with a conflicting flag and ensure it is
     # ignored when ``argv`` is empty.
     monkeypatch.setattr(sys, "argv", ["visbrain", "--visbrain-show=False"])
-    untouched = cfg.parse_cli([], config=baseline.copy())
+    untouched = cfg_mod.configure_from_argv([], config=baseline.copy())
     assert untouched.show_pyqt_app is baseline.show_pyqt_app
 
-    # Parsing explicit arguments must update the provided config in place.
+    # Parsing explicit arguments must update the provided config in place and
+    # apply logging preferences.
     mutated = baseline.copy()
-    result = cfg.parse_cli(["--visbrain-show=False"], config=mutated)
+    caplog.set_level(logging.DEBUG, logger="visbrain")
+    result = cfg_mod.configure_from_argv(
+        ["--visbrain-show=False", "--visbrain-log=debug", "--visbrain-search=test"],
+        config=mutated,
+    )
     assert result is mutated
     assert mutated.show_pyqt_app is False
+    assert mutated.log_level == "debug"
+    assert mutated.log_search == "test"
 
     # Invalid boolean values should log an error and leave the flag unchanged.
-    caplog.set_level(logging.ERROR, logger="visbrain")
     error_target = baseline.copy()
-    cfg.parse_cli(["--visbrain-show=not-a-bool"], config=error_target)
+    cfg_mod.configure_from_argv(["--visbrain-show=not-a-bool"], config=error_target)
     assert error_target.show_pyqt_app is baseline.show_pyqt_app
     assert any(
         "Invalid value for --visbrain-show" in rec.message
         for rec in caplog.records
     )
+
+    # Calling without an explicit config should mutate the shared singleton.
+    cfg.show_pyqt_app = True
+    cfg_mod.configure_from_argv(["--visbrain-show=False"])
+    assert cfg.show_pyqt_app is False

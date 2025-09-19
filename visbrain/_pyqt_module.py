@@ -24,7 +24,7 @@ except ImportError:  # pragma: no cover - shiboken missing
     shiboken6 = None
 
 from .utils import set_widget_size, set_log_level
-from .config import CONFIG, PROFILER, ensure_qt_app, ensure_vispy_app
+from .config import PROFILER, ensure_qt_app, ensure_vispy_app, get_config
 from .io import path_to_tmp, clean_tmp, path_to_visbrain_data
 
 logger = logging.getLogger('visbrain')
@@ -149,7 +149,8 @@ class _PyQtModule(object):
             self._pyqt_title('Profiler', '')
             PROFILER.finish()
         # If PyQt GUI :
-        if CONFIG.show_pyqt_app:
+        cfg = get_config()
+        if cfg.show_pyqt_app:
             self.showMaximized()
             vispy_app = ensure_vispy_app()
             if vispy_app is not None:
@@ -159,7 +160,8 @@ class _PyQtModule(object):
 
     def closeEvent(self, event):  # noqa
         """Executed method when the GUI closed."""
-        app = CONFIG.get_qt_app(create=False)
+        cfg = get_config()
+        app = cfg.get_qt_app(create=False)
         if app is not None:
             app.quit()
         logger.debug("App closed.")

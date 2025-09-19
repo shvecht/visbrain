@@ -23,10 +23,11 @@ from _pytest.mark.expression import Expression
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 try:
-    from visbrain.config import CONFIG
+    from visbrain.config import get_config
 except Exception:  # pragma: no cover - defensive in CI without GUI libs
     CONFIG = None
 else:
+    CONFIG = get_config()
     # Prevent Visbrain from attempting to display PyQt applications during
     # tests when the GUI stack is available.
     CONFIG.show_pyqt_app = False

@@ -9,7 +9,7 @@ import logging
 import numpy as np
 
 from ..utils.color import color2vb
-from ..config import CONFIG
+from ..config import get_config
 
 logger = logging.getLogger('visbrain')
 
@@ -407,7 +407,7 @@ def write_fig_canvas(filename, canvas, widget=None, autocrop=False,
     canvas.bgcolor = backup_bgcolor
 
     # Matplotlib render :
-    if CONFIG.mpl_render or not isinstance(filename, str):
+    if get_config().mpl_render or not isinstance(filename, str):
         return img
 
     # Remove alpha for files that are not png or tiff :
