@@ -443,4 +443,4 @@ def linkcode_resolve(domain, info):
        fn, linespec)
 
 # Render using Matplotlib :
-CONFIG['MPL_RENDER'] = True
+CONFIG.mpl_render = True
