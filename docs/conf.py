@@ -24,7 +24,7 @@ from sphinx_gallery.sorting import FileNameSortKey, ExplicitOrder
 from numpydoc import numpydoc, docscrape
 
 import visbrain
-from visbrain.config import CONFIG
+from visbrain.config import get_config
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -443,4 +443,4 @@ def linkcode_resolve(domain, info):
        fn, linespec)
 
 # Render using Matplotlib :
-CONFIG.mpl_render = True
+get_config().mpl_render = True

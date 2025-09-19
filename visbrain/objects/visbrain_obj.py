@@ -19,7 +19,7 @@ from ..io import (
 )
 from ..qt import QtWidgets
 from ..utils import color2vb, set_log_level, merge_cameras
-from ..config import CONFIG, ensure_vispy_app
+from ..config import ensure_vispy_app, get_config
 from ..visuals import CbarBase
 
 logger = logging.getLogger('visbrain')
@@ -237,7 +237,8 @@ class VisbrainObject(_VisbrainObj):
         kwargs : dict | {}
             Optional arguments are passed to the VisbrainCanvas class.
         """
-        if CONFIG.mpl_render or mpl:
+        cfg = get_config()
+        if cfg.mpl_render or mpl:
             canvas = self._get_parent(bgcolor, False, False, obj, **kwargs)
             mpl_preview(canvas.canvas, widget=canvas.canvas.central_widget)
         else:
@@ -247,7 +248,7 @@ class VisbrainObject(_VisbrainObj):
             if xyz:
                 vispy.scene.visuals.XYZAxis(parent=canvas.wc.scene)
             # view.camera = camera
-            if (sys.flags.interactive != 1) and show and CONFIG.show_pyqt_app:
+            if (sys.flags.interactive != 1) and show and cfg.show_pyqt_app:
                 vispy_app = ensure_vispy_app()
                 if vispy_app is not None:
                     vispy_app.run()

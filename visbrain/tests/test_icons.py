@@ -15,7 +15,7 @@ def test_module_icon_uses_packaged_resource(monkeypatch):
         pytest.skip("Qt bindings are unavailable")
 
     from visbrain._pyqt_module import _PyQtModule
-    from visbrain.config import CONFIG
+    from visbrain.config import get_config
 
     class DummyWindow(_PyQtModule, QtWidgets.QMainWindow):
         """Minimal window exposing the ``show`` helper."""
@@ -25,7 +25,8 @@ def test_module_icon_uses_packaged_resource(monkeypatch):
             _PyQtModule.__init__(self, icon="brain_icon.svg", show_settings=False)
 
     # Guard against accidental GUI execution inside tests.
-    monkeypatch.setattr(CONFIG, "show_pyqt_app", False)
+    cfg = get_config()
+    monkeypatch.setattr(cfg, "show_pyqt_app", False)
 
     window = DummyWindow()
     window.show()

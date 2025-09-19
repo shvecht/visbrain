@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import getopt
 import logging
+from dataclasses import dataclass, field
 from typing import Optional, Sequence
 
 from vispy import app as visapp
@@ -14,41 +15,80 @@ from .qt import QT_API, QtWidgets
 
 
 logger = logging.getLogger("visbrain")
-set_log_level("info")
 
 
-class ConfigManager:
+@dataclass
+class VisbrainConfig:
     """Container for runtime configuration and GUI application handles."""
 
-    qt_api: str | None
-    vispy_backend: str | None
-    show_pyqt_app: bool
-    mpl_render: bool
-    pyqt_app: Optional[QtWidgets.QApplication]
-    vispy_app: Optional[visapp.Application]
+    log_level: str = "info"
+    log_search: str | None = None
+    qt_api: str | None = QT_API
+    vispy_backend: str | None = None
+    show_pyqt_app: bool = True
+    mpl_render: bool = False
+    _pyqt_app: Optional[QtWidgets.QApplication] = field(
+        default=None, init=False, repr=False
+    )
+    _vispy_app: Optional[visapp.Application] = field(
+        default=None, init=False, repr=False
+    )
 
-    def __init__(self, qt_api: str | None = QT_API) -> None:
-        self.qt_api = qt_api
-        self.vispy_backend = qt_api.lower() if isinstance(qt_api, str) else qt_api
-        self.show_pyqt_app = True
-        self.mpl_render = False
-        self.pyqt_app = None
-        self.vispy_app = None
+    def __post_init__(self) -> None:
+        if self.vispy_backend is None and isinstance(self.qt_api, str):
+            self.vispy_backend = self.qt_api.lower()
+        self.apply_logging()
 
-    def copy(self) -> ConfigManager:
-        """Return a shallow copy of the configuration manager."""
+    # ------------------------------------------------------------------
+    # Logging helpers
+    # ------------------------------------------------------------------
+    def apply_logging(self) -> None:
+        """Apply the stored logging configuration."""
 
-        duplicate = ConfigManager(self.qt_api)
-        duplicate.vispy_backend = self.vispy_backend
-        duplicate.show_pyqt_app = self.show_pyqt_app
-        duplicate.mpl_render = self.mpl_render
-        duplicate.pyqt_app = self.pyqt_app
-        duplicate.vispy_app = self.vispy_app
+        set_log_level(self.log_level, match=self.log_search)
+
+    def set_logging(
+        self, *, level: str | None = None, match: str | None = None
+    ) -> None:
+        """Update and apply logging preferences."""
+
+        if level is not None:
+            self.log_level = level
+        if match is not None:
+            self.log_search = match
+        self.apply_logging()
+
+    # ------------------------------------------------------------------
+    # Copy helpers
+    # ------------------------------------------------------------------
+    def copy(self) -> VisbrainConfig:
+        """Return a shallow copy of the configuration."""
+
+        duplicate = VisbrainConfig(
+            log_level=self.log_level,
+            log_search=self.log_search,
+            qt_api=self.qt_api,
+            vispy_backend=self.vispy_backend,
+            show_pyqt_app=self.show_pyqt_app,
+            mpl_render=self.mpl_render,
+        )
+        duplicate._pyqt_app = self._pyqt_app
+        duplicate._vispy_app = self._vispy_app
         return duplicate
 
     # ------------------------------------------------------------------
     # Qt application helpers
     # ------------------------------------------------------------------
+    @property
+    def pyqt_app(self) -> Optional[QtWidgets.QApplication]:
+        """Return the cached Qt application instance."""
+
+        return self._pyqt_app
+
+    @pyqt_app.setter
+    def pyqt_app(self, app: Optional[QtWidgets.QApplication]) -> None:
+        self._pyqt_app = app
+
     def get_qt_app(
         self, *, create: bool = True, force: bool = False
     ) -> Optional[QtWidgets.QApplication]:
@@ -57,16 +97,26 @@ class ConfigManager:
         app = QtWidgets.QApplication.instance()
         if app is None:
             if not create or (not self.show_pyqt_app and not force):
-                self.pyqt_app = None
+                self._pyqt_app = None
                 return None
             app = QtWidgets.QApplication([""])
 
-        self.pyqt_app = app
+        self._pyqt_app = app
         return app
 
     # ------------------------------------------------------------------
     # VisPy application helpers
     # ------------------------------------------------------------------
+    @property
+    def vispy_app(self) -> Optional[visapp.Application]:
+        """Return the cached VisPy application instance."""
+
+        return self._vispy_app
+
+    @vispy_app.setter
+    def vispy_app(self, app: Optional[visapp.Application]) -> None:
+        self._vispy_app = app
+
     def get_vispy_app(
         self,
         backend: Optional[str] = None,
@@ -80,16 +130,16 @@ class ConfigManager:
             normalized = backend.lower() if isinstance(backend, str) else backend
             if normalized != self.vispy_backend:
                 self.vispy_backend = normalized
-                self.vispy_app = None
+                self._vispy_app = None
 
-        if self.vispy_app is not None:
-            return self.vispy_app
+        if self._vispy_app is not None:
+            return self._vispy_app
 
         if not create or (not self.show_pyqt_app and not force):
             return None
 
-        self.vispy_app = visapp.application.Application(self.vispy_backend)
-        return self.vispy_app
+        self._vispy_app = visapp.application.Application(self.vispy_backend)
+        return self._vispy_app
 
     def use_app(self, backend_name):
         """Force VisPy to use a specific backend."""
@@ -98,12 +148,22 @@ class ConfigManager:
             backend_name.lower() if isinstance(backend_name, str) else backend_name
         )
         self.vispy_backend = normalized
-        self.vispy_app = visapp.application.Application(normalized)
-        return self.vispy_app
+        self._vispy_app = visapp.application.Application(normalized)
+        return self._vispy_app
 
 
 # Global configuration handle exposed to consumers of :mod:`visbrain.config`.
-CONFIG = ConfigManager()
+_CONFIG = VisbrainConfig()
+
+
+def get_config() -> VisbrainConfig:
+    """Return the global :class:`VisbrainConfig` instance."""
+
+    return _CONFIG
+
+
+# Backwards compatible alias
+CONFIG = _CONFIG
 
 # Visbrain profiler (derived from the VisPy profiler)
 PROFILER = Profiler()
@@ -125,13 +185,13 @@ def get_qt_app(
 ) -> Optional[QtWidgets.QApplication]:
     """Return (and optionally create) the Qt application instance."""
 
-    return CONFIG.get_qt_app(create=create, force=force)
+    return get_config().get_qt_app(create=create, force=force)
 
 
 def ensure_qt_app(*, force: bool = False) -> Optional[QtWidgets.QApplication]:
     """Ensure a Qt application exists, respecting the headless flag."""
 
-    return CONFIG.get_qt_app(create=True, force=force)
+    return get_config().get_qt_app(create=True, force=force)
 
 
 def get_vispy_app(
@@ -142,7 +202,7 @@ def get_vispy_app(
 ) -> Optional[visapp.Application]:
     """Return (and optionally create) the VisPy application instance."""
 
-    return CONFIG.get_vispy_app(backend=backend, create=create, force=force)
+    return get_config().get_vispy_app(backend=backend, create=create, force=force)
 
 
 def ensure_vispy_app(
@@ -150,29 +210,30 @@ def ensure_vispy_app(
 ) -> Optional[visapp.Application]:
     """Ensure a VisPy application exists, respecting the headless flag."""
 
-    return CONFIG.get_vispy_app(backend=backend, create=True, force=force)
+    return get_config().get_vispy_app(backend=backend, create=True, force=force)
 
 
 def use_app(backend_name):
     """Use a specific VisPy backend."""
 
-    return CONFIG.use_app(backend_name)
+    return get_config().use_app(backend_name)
 
 
 # Matplotlib rendering defaults to disabled until explicitly enabled.
-CONFIG.mpl_render = False
+get_config().mpl_render = False
 
 # Jupyter / iPython detection enables Matplotlib rendering automatically.
-try:
+try:  # pragma: no cover - optional dependency
     ip = get_ipython()
-except NameError:
-    ip = None  # pragma: no cover - IPython not available
+except NameError:  # pragma: no cover - IPython not available
+    ip = None
 else:
     if ip is not None:  # pragma: no branch - executed only in notebooks
-        CONFIG.mpl_render = True
+        cfg = get_config()
+        cfg.mpl_render = True
         import vispy
 
-        vispy.use(CONFIG.vispy_backend)
+        vispy.use(cfg.vispy_backend)
 
 
 VISBRAIN_HELP = """
@@ -193,12 +254,12 @@ Visbrain command line arguments:
 """
 
 
-def parse_cli(
-    argv: Sequence[str], config: ConfigManager | None = None
-) -> ConfigManager:
+def configure_from_argv(
+    argv: Sequence[str], *, config: VisbrainConfig | None = None
+) -> VisbrainConfig:
     """Parse Visbrain CLI flags from *argv* and return the resulting config."""
 
-    cfg = config if config is not None else ConfigManager()
+    cfg = config if config is not None else get_config()
     argnames = [
         "visbrain-log=",
         "visbrain-show=",
@@ -217,7 +278,7 @@ def parse_cli(
             print(VISBRAIN_HELP)
             continue
         if option == "--visbrain-log":
-            set_log_level(argument)
+            cfg.set_logging(level=argument)
             continue
         if option == "--visbrain-show":
             try:
@@ -228,12 +289,23 @@ def parse_cli(
                 logger.debug("Show PyQt app : %r", cfg.show_pyqt_app)
             continue
         if option == "--visbrain-search":
-            set_log_level(match=argument)
+            cfg.set_logging(match=argument)
 
     return cfg
 
 
-def init_config(argv: Sequence[str]) -> ConfigManager:
+def parse_cli(
+    argv: Sequence[str], config: VisbrainConfig | None = None
+) -> VisbrainConfig:
+    """Backward compatible wrapper around :func:`configure_from_argv`."""
+
+    logger.warning(
+        "parse_cli is deprecated; call configure_from_argv(...) instead.",
+    )
+    return configure_from_argv(argv, config=config)
+
+
+def init_config(argv: Sequence[str]) -> VisbrainConfig:
     """Backward compatible wrapper around :func:`parse_cli`."""
 
     logger.warning(

@@ -9,7 +9,7 @@ from ..io import write_fig_canvas, mpl_preview, dialog_save
 from ..qt import QtWidgets
 from ..utils import color2vb, set_log_level, rotate_turntable, FixedCam
 from ..visuals import CbarVisual
-from ..config import CONFIG, PROFILER, ensure_vispy_app
+from ..config import PROFILER, ensure_vispy_app, get_config
 
 logger = logging.getLogger('visbrain')
 
@@ -680,7 +680,8 @@ class SceneObj(object):
             interactive figure.
         """
         self._gl_uniform_transforms()
-        if CONFIG.mpl_render:
+        cfg = get_config()
+        if cfg.mpl_render:
             mpl_preview(self.canvas, widget=self.canvas.central_widget)
         else:
             self.canvas.show(visible=True)
@@ -691,7 +692,7 @@ class SceneObj(object):
                 logger.profiler("PARENT TREE\n%s" % self._grid.describe_tree())
                 logger.profiler(" ")
                 PROFILER.finish()
-            if sys.flags.interactive != 1 and CONFIG.show_pyqt_app:
+            if sys.flags.interactive != 1 and cfg.show_pyqt_app:
                 vispy_app = ensure_vispy_app()
                 if vispy_app is not None:
                     vispy_app.run()
