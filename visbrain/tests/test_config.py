@@ -49,14 +49,12 @@ def test_import_has_no_side_effects(monkeypatch):
     assert cfg.vispy_app is None
 
 
-def test_ensure_helpers_respect_headless_flag(monkeypatch):
-    """Application helpers must honour the ``show_pyqt_app`` toggle."""
-
-    cfg_mod = _reload_config()
-    cfg = cfg_mod.get_config()
+def _install_dummy_apps(monkeypatch, cfg_mod):
+    """Install dummy Qt/VisPy applications and return their classes."""
 
     class DummyQApplication:
         created = 0
+        quitted = 0
         _instance: DummyQApplication | None = None
 
         @staticmethod
@@ -66,39 +64,163 @@ def test_ensure_helpers_respect_headless_flag(monkeypatch):
         def __init__(self, *args, **kwargs):
             DummyQApplication.created += 1
             DummyQApplication._instance = self
+            self.quit_called = 0
+
+        def quit(self):
+            DummyQApplication.quitted += 1
+            self.quit_called += 1
+            DummyQApplication._instance = None
+
+        def deleteLater(self):  # pragma: no cover - exercised in prod only
+            pass
 
     class DummyVispyApplication:
         created = 0
+        quitted = 0
 
         def __init__(self, backend=None):
             DummyVispyApplication.created += 1
             self.backend = backend
+            self.quit_called = 0
+
+        def quit(self):
+            DummyVispyApplication.quitted += 1
+            self.quit_called += 1
 
     monkeypatch.setattr(cfg_mod.QtWidgets, "QApplication", DummyQApplication)
     monkeypatch.setattr(
         cfg_mod.visapp.application, "Application", DummyVispyApplication
     )
+    return DummyQApplication, DummyVispyApplication
+
+
+def test_application_context_respects_headless_flag(monkeypatch):
+    """Application contexts must honour the ``show_pyqt_app`` toggle."""
+
+    cfg_mod = _reload_config()
+    cfg = cfg_mod.get_config()
+
+    DummyQApplication, DummyVispyApplication = _install_dummy_apps(
+        monkeypatch, cfg_mod
+    )
 
     cfg.show_pyqt_app = False
     DummyQApplication._instance = None
+    DummyQApplication.created = 0
+    DummyQApplication.quitted = 0
 
-    assert cfg_mod.ensure_qt_app() is None
+    with cfg_mod.qt_app() as app:
+        assert app is None
     assert DummyQApplication.created == 0
+    assert DummyQApplication.quitted == 0
 
-    forced_qapp = cfg_mod.ensure_qt_app(force=True)
-    assert isinstance(forced_qapp, DummyQApplication)
+    with cfg_mod.qt_app(force=True) as forced_app:
+        assert isinstance(forced_app, DummyQApplication)
+        assert forced_app.quit_called == 0
     assert DummyQApplication.created == 1
-    assert cfg.pyqt_app is forced_qapp
+    assert DummyQApplication.quitted == 1
+    assert cfg.pyqt_app is None
 
-    cfg.pyqt_app = None
+    cfg.vispy_app = None
     DummyVispyApplication.created = 0
+    DummyVispyApplication.quitted = 0
 
-    assert cfg_mod.ensure_vispy_app() is None
+    with cfg_mod.vispy_app() as app:
+        assert app is None
     assert DummyVispyApplication.created == 0
+    assert DummyVispyApplication.quitted == 0
 
-    forced_vispy = cfg_mod.ensure_vispy_app(force=True)
-    assert isinstance(forced_vispy, DummyVispyApplication)
-    assert forced_vispy.backend == cfg.vispy_backend
+    with cfg_mod.vispy_app(force=True) as forced_vispy:
+        assert isinstance(forced_vispy, DummyVispyApplication)
+        assert forced_vispy.backend == cfg.vispy_backend
+        assert forced_vispy.quit_called == 0
+    assert DummyVispyApplication.created == 1
+    assert DummyVispyApplication.quitted == 1
+    assert cfg.vispy_app is None
+
+
+def test_application_context_nested_teardown(monkeypatch):
+    """Nested contexts should reuse instances and close them once."""
+
+    cfg_mod = _reload_config()
+    cfg = cfg_mod.get_config()
+
+    DummyQApplication, DummyVispyApplication = _install_dummy_apps(
+        monkeypatch, cfg_mod
+    )
+
+    cfg.show_pyqt_app = True
+    DummyQApplication.created = 0
+    DummyQApplication.quitted = 0
+
+    with cfg_mod.qt_app(force=True) as outer_app:
+        assert isinstance(outer_app, DummyQApplication)
+        assert DummyQApplication.created == 1
+        assert cfg.pyqt_app is outer_app
+        with cfg_mod.qt_app() as inner_app:
+            assert inner_app is outer_app
+        assert DummyQApplication.quitted == 0
+    assert DummyQApplication.quitted == 1
+    assert cfg.pyqt_app is None
+
+    DummyVispyApplication.created = 0
+    DummyVispyApplication.quitted = 0
+
+    with cfg_mod.vispy_app(force=True) as outer_vispy:
+        assert isinstance(outer_vispy, DummyVispyApplication)
+        assert DummyVispyApplication.created == 1
+        assert cfg.vispy_app is outer_vispy
+        with cfg_mod.vispy_app() as inner_vispy:
+            assert inner_vispy is outer_vispy
+        assert DummyVispyApplication.quitted == 0
+    assert DummyVispyApplication.quitted == 1
+    assert cfg.vispy_app is None
+
+
+def test_application_context_explicit_reset(monkeypatch):
+    """Contexts should be able to reset pre-existing application handles."""
+
+    cfg_mod = _reload_config()
+    cfg = cfg_mod.get_config()
+
+    DummyQApplication, DummyVispyApplication = _install_dummy_apps(
+        monkeypatch, cfg_mod
+    )
+
+    cfg.show_pyqt_app = True
+    DummyQApplication.created = 0
+    DummyQApplication.quitted = 0
+    existing_qapp = DummyQApplication()
+    DummyQApplication.created = 0
+    cfg.pyqt_app = existing_qapp
+
+    with cfg_mod.qt_app(create=False) as app:
+        assert app is existing_qapp
+    assert DummyQApplication.created == 0
+    assert DummyQApplication.quitted == 0
+    assert cfg.pyqt_app is existing_qapp
+
+    with cfg_mod.qt_app(create=False, reset=True) as app:
+        assert app is existing_qapp
+    assert DummyQApplication.quitted == 1
+    assert cfg.pyqt_app is None
+
+    DummyVispyApplication.created = 0
+    DummyVispyApplication.quitted = 0
+    existing_vispy = DummyVispyApplication(cfg.vispy_backend)
+    DummyVispyApplication.created = 0
+    cfg.vispy_app = existing_vispy
+
+    with cfg_mod.vispy_app(create=False) as app:
+        assert app is existing_vispy
+    assert DummyVispyApplication.created == 0
+    assert DummyVispyApplication.quitted == 0
+    assert cfg.vispy_app is existing_vispy
+
+    with cfg_mod.vispy_app(create=False, reset=True) as app:
+        assert app is existing_vispy
+    assert DummyVispyApplication.quitted == 1
+    assert cfg.vispy_app is None
 
 
 def test_configure_from_argv_updates_runtime(monkeypatch, caplog):
