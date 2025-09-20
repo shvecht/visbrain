@@ -7,9 +7,12 @@ legacy environments.
 """
 from __future__ import annotations
 
+import atexit
 import importlib
 import logging
+import weakref
 from types import SimpleNamespace
+from typing import Optional
 
 logger = logging.getLogger("visbrain")
 
@@ -76,4 +79,94 @@ def _import_binding() -> None:
 
 _import_binding()
 
-__all__ = ["QtCore", "QtGui", "QtWidgets", "Qt", "QT_API"]
+_QAPP_CLEANUP_REGISTERED = False
+
+
+class _QObjectLifecycle:
+    """Track whether a :class:`~QtCore.QObject` is still alive."""
+
+    def __init__(self) -> None:
+        self._ref: weakref.ReferenceType[QtCore.QObject] | None = None
+        self._alive = False
+
+    def watch(self, obj: QtCore.QObject) -> None:
+        """Start tracking *obj* and mark it as alive."""
+
+        if obj is None:
+            return
+        current = self._ref() if self._ref is not None else None
+        if current is obj and self._alive:
+            return
+
+        def _mark_dead(*_args: object) -> None:
+            self._alive = False
+            self._ref = None
+
+        try:
+            obj.destroyed.connect(_mark_dead)  # type: ignore[union-attr]
+        except Exception:  # pragma: no cover - defensive fallback
+            pass
+        self._ref = weakref.ref(obj)
+        self._alive = True
+
+    def get(self) -> Optional[QtCore.QObject]:
+        """Return the tracked object if it is still alive."""
+
+        if not self._alive or self._ref is None:
+            return None
+        instance = self._ref()
+        if instance is None:
+            self._alive = False
+            self._ref = None
+            return None
+        return instance
+
+
+_QAPP_LIFECYCLE = _QObjectLifecycle()
+
+
+def _shutdown_qapplication() -> None:
+    """Attempt to gracefully close the tracked Qt application."""
+
+    if QtCore.QCoreApplication.closingDown():  # pragma: no cover - during exit
+        return
+
+    tracked = _QAPP_LIFECYCLE.get()
+    app = tracked if isinstance(tracked, QtWidgets.QApplication) else None
+    if app is None:
+        app = QtWidgets.QApplication.instance()
+    if app is None:
+        return
+
+    set_quit = getattr(QtWidgets.QApplication, "setQuitOnLastWindowClosed", None)
+    if callable(set_quit):  # pragma: no branch - guard missing Qt API
+        try:
+            set_quit(True)
+        except Exception:  # pragma: no cover - best effort cleanup
+            pass
+
+    quit_method = getattr(app, "quit", None)
+    if callable(quit_method):
+        quit_method()
+
+
+def guard_qapp_lifecycle() -> None:
+    """Configure the Qt application for deterministic shutdown semantics."""
+
+    set_quit = getattr(QtWidgets.QApplication, "setQuitOnLastWindowClosed", None)
+    if callable(set_quit):  # pragma: no branch - guard missing Qt API
+        try:
+            set_quit(False)
+        except Exception:  # pragma: no cover - best effort cleanup
+            pass
+    app = QtWidgets.QApplication.instance()
+    if app is not None:
+        _QAPP_LIFECYCLE.watch(app)
+
+    global _QAPP_CLEANUP_REGISTERED
+    if not _QAPP_CLEANUP_REGISTERED:
+        atexit.register(_shutdown_qapplication)
+        _QAPP_CLEANUP_REGISTERED = True
+
+
+__all__ = ["QtCore", "QtGui", "QtWidgets", "Qt", "QT_API", "guard_qapp_lifecycle"]

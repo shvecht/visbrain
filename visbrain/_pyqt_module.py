@@ -1,27 +1,10 @@
 """All visbrain modules based on Qt should inherit from _PyQtModule."""
 from __future__ import annotations
 
-import atexit
 import logging
 from importlib import resources
 
-from .qt import QtGui, QtWidgets, QT_API
-
-try:  # pragma: no cover - optional dependency during transition
-    if QT_API == "PyQt5":
-        import sip  # type: ignore
-    else:  # pragma: no branch - PySide environments skip sip
-        sip = None
-except ImportError:  # pragma: no cover - sip missing
-    sip = None
-
-try:  # pragma: no cover - optional dependency during transition
-    if QT_API and QT_API.startswith("PySide"):
-        import shiboken6  # type: ignore
-    else:  # pragma: no branch - not needed on PyQt5
-        shiboken6 = None
-except ImportError:  # pragma: no cover - shiboken missing
-    shiboken6 = None
+from .qt import QtGui, guard_qapp_lifecycle
 
 from .utils import set_widget_size, set_log_level
 from .config import PROFILER, get_config, qt_app, vispy_app
@@ -29,26 +12,7 @@ from .io import path_to_tmp, clean_tmp, path_to_visbrain_data
 
 logger = logging.getLogger('visbrain')
 
-
-def _guard_qapp_lifecycle() -> None:
-    """Apply the appropriate guard for the active Qt binding."""
-    if QT_API == "PyQt5" and sip is not None:
-        sip.setdestroyonexit(False)
-        return
-
-    if QT_API and QT_API.startswith("PySide") and shiboken6 is not None:
-        # PySide bindings historically crashed when the QApplication was torn
-        # down while widgets were still alive. Requesting a graceful shutdown
-        # prevents this without relying on PyQt's sip module.
-        def _cleanup_qapp() -> None:
-            app = QtWidgets.QApplication.instance()
-            if app is not None and shiboken6.isValid(app):
-                app.quit()
-
-        atexit.register(_cleanup_qapp)
-
-
-_guard_qapp_lifecycle()
+guard_qapp_lifecycle()
 
 
 class _PyQtModule(object):

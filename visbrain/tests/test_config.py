@@ -27,9 +27,16 @@ def test_import_has_no_side_effects(monkeypatch):
         def instance():
             return DummyQApplication._instance
 
+        @staticmethod
+        def setQuitOnLastWindowClosed(enabled):  # pragma: no cover - compatibility
+            DummyQApplication._quit_on_last = enabled
+
         def __init__(self, *args, **kwargs):
             DummyQApplication.created += 1
             DummyQApplication._instance = self
+
+        def processEvents(self):  # pragma: no cover - compatibility
+            pass
 
     class DummyVispyApplication:
         created = 0
@@ -61,6 +68,10 @@ def _install_dummy_apps(monkeypatch, cfg_mod):
         def instance():
             return DummyQApplication._instance
 
+        @staticmethod
+        def setQuitOnLastWindowClosed(enabled):  # pragma: no cover - compatibility
+            DummyQApplication._quit_on_last = enabled
+
         def __init__(self, *args, **kwargs):
             DummyQApplication.created += 1
             DummyQApplication._instance = self
@@ -72,6 +83,9 @@ def _install_dummy_apps(monkeypatch, cfg_mod):
             DummyQApplication._instance = None
 
         def deleteLater(self):  # pragma: no cover - exercised in prod only
+            pass
+
+        def processEvents(self):  # pragma: no cover - compatibility
             pass
 
     class DummyVispyApplication:

@@ -13,7 +13,7 @@ from vispy import app as visapp
 from visbrain.utils.logging import set_log_level
 from visbrain.utils.others import Profiler
 
-from .qt import QT_API, QtWidgets
+from .qt import QT_API, QtWidgets, guard_qapp_lifecycle
 
 
 logger = logging.getLogger("visbrain")
@@ -91,31 +91,6 @@ class VisbrainConfig:
     def show_pyqt_app(self, enabled: bool) -> None:
         self.show_gui = bool(enabled)
 
-
-@dataclass
-class _AppContextState:
-    """Book-keeping helper for nested application contexts."""
-
-    stack: list[tuple[bool, bool]] = field(default_factory=list)
-
-    def push(self, owned: bool, reset: bool) -> None:
-        self.stack.append((owned, reset))
-
-    def pop(self) -> tuple[bool, bool]:
-        if not self.stack:
-            raise RuntimeError("Application context stack underflow")
-        return self.stack.pop()
-
-    def propagate_reset(self, reset: bool) -> None:
-        if reset and self.stack:
-            owned, parent_reset = self.stack[-1]
-            if not parent_reset:
-                self.stack[-1] = (owned, True)
-
-    @property
-    def depth(self) -> int:
-        return len(self.stack)
-
     # ------------------------------------------------------------------
     # Qt application helpers
     # ------------------------------------------------------------------
@@ -142,6 +117,7 @@ class _AppContextState:
             app = QtWidgets.QApplication([""])
 
         self._pyqt_app = app
+        guard_qapp_lifecycle()
         return app
 
     # ------------------------------------------------------------------
@@ -192,6 +168,31 @@ class _AppContextState:
         return self._vispy_app
 
 
+@dataclass
+class _AppContextState:
+    """Book-keeping helper for nested application contexts."""
+
+    stack: list[tuple[bool, bool]] = field(default_factory=list)
+
+    def push(self, owned: bool, reset: bool) -> None:
+        self.stack.append((owned, reset))
+
+    def pop(self) -> tuple[bool, bool]:
+        if not self.stack:
+            raise RuntimeError("Application context stack underflow")
+        return self.stack.pop()
+
+    def propagate_reset(self, reset: bool) -> None:
+        if reset and self.stack:
+            owned, parent_reset = self.stack[-1]
+            if not parent_reset:
+                self.stack[-1] = (owned, True)
+
+    @property
+    def depth(self) -> int:
+        return len(self.stack)
+
+
 # Global configuration handle exposed to consumers of :mod:`visbrain.config`.
 _SHOW_GUI_ENVVAR = "VISBRAIN_SHOW_GUI"
 
@@ -228,7 +229,9 @@ def configure_from_environ(
         try:
             cfg.show_gui = _read_show_gui_flag(raw_show)
         except ValueError:
-            logger.error("Invalid value for %s: %s", _SHOW_GUI_ENVVAR, raw_show)
+            logger.error(
+                "Invalid value for %s: %s" % (_SHOW_GUI_ENVVAR, raw_show)
+            )
 
     return cfg
 
@@ -469,9 +472,11 @@ def configure_from_argv(
             try:
                 cfg.show_gui = _parse_bool_flag(argument)
             except ValueError:
-                logger.error("Invalid value for --visbrain-show: %s", argument)
+                logger.error(
+                    "Invalid value for --visbrain-show: %s" % argument
+                )
             else:
-                logger.debug("Show GUI resources : %r", cfg.show_gui)
+                logger.debug("Show GUI resources : %s" % cfg.show_gui)
             continue
         if option == "--visbrain-search":
             cfg.set_logging(match=argument)

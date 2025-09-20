@@ -52,7 +52,7 @@ Dependencies
 * NumPy (>= 1.26.4) and SciPy (>= 1.11.4)
 * Matplotlib (>= 3.8.4)
 * VisPy (>= 0.13.0)
-* PySide6 (>= 6.7.1) and ``shiboken6``
+* PySide6 (>= 6.7.1) — preferred Qt binding that bundles ``shiboken6``
 * PyOpenGL (>= 3.1.7)
 * Pillow (>= 10.3.0)
 
