@@ -15,6 +15,8 @@ Key changes
 * ``VisbrainConfig`` exposes the active Qt backend, Matplotlib render flag and
   any instantiated GUI handles through attributes instead of the previous
   mutable dictionary.
+* ``configure_from_environ`` reads ``VISBRAIN_SHOW_GUI`` so automation can flip
+  headless mode via environment variables instead of mutating globals.
 * ``ensure_qt_app()`` and ``ensure_vispy_app()`` lazily create GUI
   applications.  Both respect the ``VisbrainConfig.show_pyqt_app`` flag so tests
   run headless by default while still allowing opt-in GUI execution via the
@@ -31,12 +33,14 @@ Running headless
 ----------------
 
 Test runners and automation harnesses should continue to set
-``QT_QPA_PLATFORM=offscreen`` (see :mod:`conftest`) and toggle headless mode via
-``get_config().show_pyqt_app = False``.  The new helpers will return ``None``
-in that configuration, so call sites must guard against ``None`` before
-touching GUI handles.  When a test genuinely needs an application instance it
-can request it with ``ensure_qt_app(force=True)`` or
-``ensure_vispy_app(force=True)``.
+``QT_QPA_PLATFORM=offscreen`` (see :mod:`conftest`) and opt into headless mode
+by calling :func:`visbrain.config.configure_headless` or exporting
+``VISBRAIN_SHOW_GUI=0``.  The helper only sets a default when the variable is
+missing, so local runs can still override it with
+``VISBRAIN_SHOW_GUI=1``.  The lazy GUI helpers return ``None`` in headless
+mode, so call sites must guard against ``None`` before touching GUI handles.
+When a test genuinely needs an application instance it can request it with
+``ensure_qt_app(force=True)`` or ``ensure_vispy_app(force=True)``.
 
 CLI integration
 ---------------
@@ -46,6 +50,17 @@ module import.  Instead they should call
 ``configure_from_argv(sys.argv[1:], config=get_config())`` before bootstrapping
 their UI.  The parser now respects all existing flags and
 reports invalid ``--visbrain-show`` values without mutating the stored state.
+``configure_from_environ`` can be called ahead of CLI parsing so deployment
+scripts can respect ``VISBRAIN_SHOW_GUI`` alongside command line overrides.
+
+Enabling interactive launches
+-----------------------------
+
+Local runs that should always display the GUI can either export
+``VISBRAIN_SHOW_GUI=1`` or pass ``--visbrain-show=True`` to entry points.  Both
+mechanisms update :class:`VisbrainConfig` through the same normalization logic,
+so automation that sets the environment variable can still be overridden by a
+CLI flag when necessary.
 
 Practical examples
 ------------------
