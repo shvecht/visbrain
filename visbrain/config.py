@@ -3,8 +3,9 @@ from __future__ import annotations
 
 import getopt
 import logging
+from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Optional, Sequence
+from typing import Iterator, Optional, Sequence
 
 from vispy import app as visapp
 
@@ -75,6 +76,31 @@ class VisbrainConfig:
         duplicate._pyqt_app = self._pyqt_app
         duplicate._vispy_app = self._vispy_app
         return duplicate
+
+
+@dataclass
+class _AppContextState:
+    """Book-keeping helper for nested application contexts."""
+
+    stack: list[tuple[bool, bool]] = field(default_factory=list)
+
+    def push(self, owned: bool, reset: bool) -> None:
+        self.stack.append((owned, reset))
+
+    def pop(self) -> tuple[bool, bool]:
+        if not self.stack:
+            raise RuntimeError("Application context stack underflow")
+        return self.stack.pop()
+
+    def propagate_reset(self, reset: bool) -> None:
+        if reset and self.stack:
+            owned, parent_reset = self.stack[-1]
+            if not parent_reset:
+                self.stack[-1] = (owned, True)
+
+    @property
+    def depth(self) -> int:
+        return len(self.stack)
 
     # ------------------------------------------------------------------
     # Qt application helpers
@@ -154,6 +180,8 @@ class VisbrainConfig:
 
 # Global configuration handle exposed to consumers of :mod:`visbrain.config`.
 _CONFIG = VisbrainConfig()
+_QT_CONTEXT_STATE = _AppContextState()
+_VISPY_CONTEXT_STATE = _AppContextState()
 
 
 def get_config() -> VisbrainConfig:
@@ -217,6 +245,93 @@ def use_app(backend_name):
     """Use a specific VisPy backend."""
 
     return get_config().use_app(backend_name)
+
+
+def _shutdown_qt_application(
+    config: VisbrainConfig, app: QtWidgets.QApplication
+) -> None:
+    """Attempt to gracefully close a Qt application instance."""
+
+    try:
+        quit_method = getattr(app, "quit", None)
+        if callable(quit_method):
+            quit_method()
+        else:
+            close_all = getattr(app, "closeAllWindows", None)
+            if callable(close_all):  # pragma: no branch - best effort fallback
+                close_all()
+        delete_later = getattr(app, "deleteLater", None)
+        if callable(delete_later):  # pragma: no branch - optional Qt API
+            delete_later()
+    finally:
+        config.pyqt_app = None
+
+
+def _shutdown_vispy_application(
+    config: VisbrainConfig, app: visapp.Application
+) -> None:
+    """Attempt to gracefully close a VisPy application instance."""
+
+    try:
+        quit_method = getattr(app, "quit", None)
+        if callable(quit_method):
+            quit_method()
+    finally:
+        config.vispy_app = None
+
+
+@contextmanager
+def qt_app(
+    *, create: bool = True, force: bool = False, reset: bool = False
+) -> Iterator[Optional[QtWidgets.QApplication]]:
+    """Context manager yielding the active Qt application instance."""
+
+    config = get_config()
+    previous = config.pyqt_app
+    app = config.get_qt_app(create=create, force=force)
+    if app is None:
+        yield None
+        return
+
+    owned = app is not previous
+    _QT_CONTEXT_STATE.push(owned, reset)
+    try:
+        yield app
+    finally:
+        owned_state, reset_state = _QT_CONTEXT_STATE.pop()
+        _QT_CONTEXT_STATE.propagate_reset(reset_state)
+        if _QT_CONTEXT_STATE.depth == 0 and (owned_state or reset_state):
+            _shutdown_qt_application(config, app)
+
+
+@contextmanager
+def vispy_app(
+    backend: Optional[str] = None,
+    *,
+    create: bool = True,
+    force: bool = False,
+    reset: bool = False,
+) -> Iterator[Optional[visapp.Application]]:
+    """Context manager yielding the active VisPy application instance."""
+
+    config = get_config()
+    previous = config.vispy_app
+    app = config.get_vispy_app(
+        backend=backend, create=create, force=force
+    )
+    if app is None:
+        yield None
+        return
+
+    owned = app is not previous
+    _VISPY_CONTEXT_STATE.push(owned, reset)
+    try:
+        yield app
+    finally:
+        owned_state, reset_state = _VISPY_CONTEXT_STATE.pop()
+        _VISPY_CONTEXT_STATE.propagate_reset(reset_state)
+        if _VISPY_CONTEXT_STATE.depth == 0 and (owned_state or reset_state):
+            _shutdown_vispy_application(config, app)
 
 
 # Matplotlib rendering defaults to disabled until explicitly enabled.
