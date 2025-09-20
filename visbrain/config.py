@@ -3,9 +3,10 @@ from __future__ import annotations
 
 import getopt
 import logging
+import os
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Iterator, Optional, Sequence
+from typing import Iterator, Mapping, MutableMapping, Optional, Sequence
 
 from vispy import app as visapp
 
@@ -26,7 +27,7 @@ class VisbrainConfig:
     log_search: str | None = None
     qt_api: str | None = QT_API
     vispy_backend: str | None = None
-    show_pyqt_app: bool = True
+    show_gui: bool = True
     mpl_render: bool = False
     _pyqt_app: Optional[QtWidgets.QApplication] = field(
         default=None, init=False, repr=False
@@ -70,12 +71,25 @@ class VisbrainConfig:
             log_search=self.log_search,
             qt_api=self.qt_api,
             vispy_backend=self.vispy_backend,
-            show_pyqt_app=self.show_pyqt_app,
+            show_gui=self.show_gui,
             mpl_render=self.mpl_render,
         )
         duplicate._pyqt_app = self._pyqt_app
         duplicate._vispy_app = self._vispy_app
         return duplicate
+
+    # ------------------------------------------------------------------
+    # Backwards compatibility helpers
+    # ------------------------------------------------------------------
+    @property
+    def show_pyqt_app(self) -> bool:
+        """Return whether GUI resources should be created."""
+
+        return self.show_gui
+
+    @show_pyqt_app.setter
+    def show_pyqt_app(self, enabled: bool) -> None:
+        self.show_gui = bool(enabled)
 
 
 @dataclass
@@ -122,7 +136,7 @@ class _AppContextState:
 
         app = QtWidgets.QApplication.instance()
         if app is None:
-            if not create or (not self.show_pyqt_app and not force):
+            if not create or (not self.show_gui and not force):
                 self._pyqt_app = None
                 return None
             app = QtWidgets.QApplication([""])
@@ -161,7 +175,7 @@ class _AppContextState:
         if self._vispy_app is not None:
             return self._vispy_app
 
-        if not create or (not self.show_pyqt_app and not force):
+        if not create or (not self.show_gui and not force):
             return None
 
         self._vispy_app = visapp.application.Application(self.vispy_backend)
@@ -179,9 +193,76 @@ class _AppContextState:
 
 
 # Global configuration handle exposed to consumers of :mod:`visbrain.config`.
+_SHOW_GUI_ENVVAR = "VISBRAIN_SHOW_GUI"
+
+
+def _parse_bool_flag(value: str) -> bool:
+    """Return a boolean from a CLI or environment flag value."""
+
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "yes", "y", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "n", "off"}:
+        return False
+    raise ValueError(f"Unsupported boolean value: {value!r}")
+
+
+def _read_show_gui_flag(env_value: str) -> bool:
+    """Parse an environment toggle for GUI visibility."""
+
+    return _parse_bool_flag(env_value)
+
+
+def configure_from_environ(
+    *,
+    environ: Mapping[str, str] | None = None,
+    config: VisbrainConfig | None = None,
+) -> VisbrainConfig:
+    """Update configuration flags from environment variables."""
+
+    env = environ if environ is not None else os.environ
+    cfg = config if config is not None else get_config()
+
+    raw_show = env.get(_SHOW_GUI_ENVVAR)
+    if raw_show is not None:
+        try:
+            cfg.show_gui = _read_show_gui_flag(raw_show)
+        except ValueError:
+            logger.error("Invalid value for %s: %s", _SHOW_GUI_ENVVAR, raw_show)
+
+    return cfg
+
+
+def configure_headless(
+    *,
+    environ: MutableMapping[str, str] | None = None,
+    config: VisbrainConfig | None = None,
+    force: bool = False,
+) -> VisbrainConfig:
+    """Ensure GUI creation is disabled in automated environments.
+
+    Parameters
+    ----------
+    environ:
+        Mapping updated with the headless toggle. Defaults to :data:`os.environ`.
+    config:
+        Configuration instance to update. Defaults to :func:`get_config()`.
+    force:
+        When ``True`` the environment toggle is overwritten even if it already
+        exists. When ``False`` an existing value takes precedence.
+    """
+
+    env = environ if environ is not None else os.environ
+    if force or _SHOW_GUI_ENVVAR not in env:
+        env[_SHOW_GUI_ENVVAR] = "0"
+    return configure_from_environ(environ=env, config=config)
+
+
 _CONFIG = VisbrainConfig()
 _QT_CONTEXT_STATE = _AppContextState()
 _VISPY_CONTEXT_STATE = _AppContextState()
+
+configure_from_environ(config=_CONFIG)
 
 
 def get_config() -> VisbrainConfig:
@@ -195,17 +276,6 @@ CONFIG = _CONFIG
 
 # Visbrain profiler (derived from the VisPy profiler)
 PROFILER = Profiler()
-
-
-def _parse_bool_flag(value: str) -> bool:
-    """Return a boolean from a CLI flag value."""
-
-    normalized = value.strip().lower()
-    if normalized in {"1", "true", "yes", "y", "on"}:
-        return True
-    if normalized in {"0", "false", "no", "n", "off"}:
-        return False
-    raise ValueError(f"Unsupported boolean value: {value!r}")
 
 
 def get_qt_app(
@@ -397,11 +467,11 @@ def configure_from_argv(
             continue
         if option == "--visbrain-show":
             try:
-                cfg.show_pyqt_app = _parse_bool_flag(argument)
+                cfg.show_gui = _parse_bool_flag(argument)
             except ValueError:
                 logger.error("Invalid value for --visbrain-show: %s", argument)
             else:
-                logger.debug("Show PyQt app : %r", cfg.show_pyqt_app)
+                logger.debug("Show GUI resources : %r", cfg.show_gui)
             continue
         if option == "--visbrain-search":
             cfg.set_logging(match=argument)

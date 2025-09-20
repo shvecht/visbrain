@@ -246,7 +246,7 @@ def test_configure_from_argv_updates_runtime(monkeypatch, caplog):
         config=mutated,
     )
     assert result is mutated
-    assert mutated.show_pyqt_app is False
+    assert mutated.show_gui is False
     assert mutated.log_level == "debug"
     assert mutated.log_search == "test"
 
@@ -260,6 +260,67 @@ def test_configure_from_argv_updates_runtime(monkeypatch, caplog):
     )
 
     # Calling without an explicit config should mutate the shared singleton.
-    cfg.show_pyqt_app = True
+    cfg.show_gui = True
     cfg_mod.configure_from_argv(["--visbrain-show=False"])
-    assert cfg.show_pyqt_app is False
+    assert cfg.show_gui is False
+
+
+def test_environment_overrides_default(monkeypatch):
+    """Environment variables should control the headless toggle."""
+
+    monkeypatch.setenv("VISBRAIN_SHOW_GUI", "0")
+    cfg_mod = _reload_config()
+    cfg = cfg_mod.get_config()
+    assert cfg.show_gui is False
+
+    monkeypatch.setenv("VISBRAIN_SHOW_GUI", "1")
+    cfg_mod = _reload_config()
+    cfg = cfg_mod.get_config()
+    assert cfg.show_gui is True
+
+
+def test_configure_headless_defaults():
+    """The helper should set the environment default when unset."""
+
+    cfg_mod = _reload_config()
+    env: dict[str, str] = {}
+    config = cfg_mod.VisbrainConfig()
+
+    result = cfg_mod.configure_headless(environ=env, config=config)
+    assert env["VISBRAIN_SHOW_GUI"] == "0"
+    assert result.show_gui is False
+
+
+def test_configure_headless_respects_existing():
+    """Existing environment toggles should be honoured by default."""
+
+    cfg_mod = _reload_config()
+    env = {"VISBRAIN_SHOW_GUI": "1"}
+    config = cfg_mod.VisbrainConfig()
+
+    result = cfg_mod.configure_headless(environ=env, config=config)
+    assert env["VISBRAIN_SHOW_GUI"] == "1"
+    assert result.show_gui is True
+
+    forced = cfg_mod.configure_headless(
+        environ=env, config=config, force=True
+    )
+    assert env["VISBRAIN_SHOW_GUI"] == "0"
+    assert forced.show_gui is False
+
+
+def test_configure_from_environ_invalid_value(caplog):
+    """Invalid environment toggles should log an error and be ignored."""
+
+    cfg_mod = _reload_config()
+    env = {"VISBRAIN_SHOW_GUI": "maybe"}
+    config = cfg_mod.VisbrainConfig()
+
+    caplog.set_level(logging.ERROR, logger="visbrain")
+    cfg_mod.configure_from_environ(environ=env, config=config)
+
+    assert config.show_gui is True
+    assert any(
+        "Invalid value for VISBRAIN_SHOW_GUI" in record.message
+        for record in caplog.records
+    )
