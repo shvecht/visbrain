@@ -69,7 +69,7 @@ Visbrain requires :
 * SciPy >= 1.11.4
 * VisPy >= 0.13.0
 * Matplotlib >= 3.8.4
-* PySide6 >= 6.7.1 (installs ``shiboken6``)
+* PySide6 >= 6.7.1 (preferred Qt binding; installs ``shiboken6`` automatically)
 * Pillow >= 10.3.0
 * PyOpenGL >= 3.1.7
 
