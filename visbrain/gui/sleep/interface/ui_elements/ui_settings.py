@@ -267,15 +267,22 @@ class UiSettings(object):
         slmax = self._SlVal.maximum()
         win = self._SigWin.value()
         # Set minimum :
-        self._SlVal.setMinimum(self._time.min())
+        time_min = int(np.floor(float(self._time.min())))
+        self._SlVal.setMinimum(time_min)
         # Set maximum :
         step = self._SigSlStep.value()
-        self._SlVal.setMaximum(((self._time.max() - win) / step) + 1)
-        self._SlVal.setTickInterval(step)
-        self._SlVal.setSingleStep(step)
-        self._SlGoto.setMaximum((self._time.max() - win))
+        step_int = max(1, int(round(float(step))))
+        max_position = int(
+            np.floor(float((self._time.max() - win) / step)) + 1
+        )
+        self._SlVal.setMaximum(max(time_min, max_position))
+        self._SlVal.setTickInterval(step_int)
+        self._SlVal.setSingleStep(step_int)
+        goto_max = int(np.floor(float(self._time.max() - win)))
+        self._SlGoto.setMaximum(max(time_min, goto_max))
         # Re-set slider value :
-        self._SlVal.setValue(sl * self._SlVal.maximum() / slmax)
+        if slmax > 0:
+            self._SlVal.setValue(int(sl * self._SlVal.maximum() / slmax))
 
         if self._slOnStart:
             self._fcn_slider_move()

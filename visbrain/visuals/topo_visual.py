@@ -442,7 +442,7 @@ class TopoMesh(object):
                 "`python -m visbrain.io.download eegref.npz --type topo` to "
                 "fetch it."
             )
-        file = np.load(path)
+        file = np.load(path, allow_pickle=True)
         name_ref, xyz_ref = file['chan'], file['xyz']
         keeponly = np.ones((len(chan)), dtype=bool)
         # Find and load xyz coordinates :

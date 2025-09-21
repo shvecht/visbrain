@@ -79,6 +79,10 @@ def _import_binding() -> None:
 
 _import_binding()
 
+if QtWidgets is not None and QtGui is not None:
+    if not hasattr(QtWidgets, "QAction") and hasattr(QtGui, "QAction"):
+        QtWidgets.QAction = QtGui.QAction  # type: ignore[attr-defined]
+
 _QAPP_CLEANUP_REGISTERED = False
 
 

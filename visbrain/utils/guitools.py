@@ -534,7 +534,10 @@ def fill_qt_table(
             filt_model.setSourceModel(model)
             filt_model.setFilterKeyColumn(filter_col)
             filt_model.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
-            filter.textChanged.connect(filt_model.setFilterRegExp)
+            set_filter = getattr(filt_model, "setFilterRegularExpression", None)
+            if set_filter is None:
+                set_filter = getattr(filt_model, "setFilterRegExp")
+            filter.textChanged.connect(set_filter)
             table.setModel(filt_model)
         return model
 
