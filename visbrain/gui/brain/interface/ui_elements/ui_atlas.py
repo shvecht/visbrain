@@ -282,7 +282,9 @@ class UiAtlas(object):
         """Reset ROIs selection."""
         # Unchecked all ROIs :
         for num in range(self._roiModel.rowCount()):
-            self._roiModel.item(num, 0).setCheckState(QtCore.Qt.Unchecked)
+            self._roiModel.item(num, 0).setCheckState(
+                QtCore.Qt.CheckState.Unchecked
+            )
 
     def _fcn_get_selected_rois(self):
         """Get the list of selected ROIs."""
@@ -290,7 +292,7 @@ class UiAtlas(object):
         all_idx = list(self.roi.get_labels()['index'])
         for num in range(self._roiModel.rowCount()):
             item = self._roiModel.item(num, 0)
-            if item.checkState():
+            if item.checkState() == QtCore.Qt.CheckState.Checked:
                 _roitoadd.append(all_idx[num])
         return _roitoadd
 

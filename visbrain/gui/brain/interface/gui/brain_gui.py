@@ -16,14 +16,15 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QIcon, QImage, QKeySequence, QLinearGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDoubleSpinBox,
-    QFrame, QGridLayout, QGroupBox, QHBoxLayout,
-    QHeaderView, QLabel, QLayout, QLineEdit,
-    QMainWindow, QMenu, QMenuBar, QProgressBar,
-    QPushButton, QScrollArea, QSizePolicy, QSlider,
-    QSpacerItem, QSpinBox, QSplitter, QStackedWidget,
-    QStatusBar, QTabWidget, QTableView, QTableWidget,
-    QTableWidgetItem, QToolButton, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QAbstractScrollArea, QApplication, QCheckBox, QComboBox,
+    QDoubleSpinBox, QFrame, QGridLayout, QGroupBox,
+    QHBoxLayout, QHeaderView, QLabel, QLayout,
+    QLineEdit, QMainWindow, QMenu, QMenuBar,
+    QProgressBar, QPushButton, QScrollArea, QSizePolicy,
+    QSlider, QSpacerItem, QSpinBox, QSplitter,
+    QStackedWidget, QStatusBar, QTabWidget, QTableView,
+    QTableWidget, QTableWidgetItem, QToolButton, QVBoxLayout,
+    QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -161,14 +162,16 @@ class Ui_MainWindow(object):
         self.splitter = QSplitter(self.centralwidget)
         self.splitter.setObjectName(u"splitter")
         self.splitter.setOrientation(Qt.Horizontal)
+        self.splitter.setChildrenCollapsible(False)
+        self.splitter.setHandleWidth(12)
         self.q_widget = QWidget(self.splitter)
         self.q_widget.setObjectName(u"q_widget")
-        sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.q_widget.sizePolicy().hasHeightForWidth())
         self.q_widget.setSizePolicy(sizePolicy)
-        self.q_widget.setMinimumSize(QSize(0, 0))
+        self.q_widget.setMinimumSize(QSize(360, 0))
         self.q_widget.setMaximumSize(QSize(16777215, 16777215))
         self.verticalLayout_4 = QVBoxLayout(self.q_widget)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
@@ -961,6 +964,7 @@ class Ui_MainWindow(object):
         self.scrollArea_2.setObjectName(u"scrollArea_2")
         self.scrollArea_2.setFrameShape(QFrame.NoFrame)
         self.scrollArea_2.setWidgetResizable(True)
+        self.scrollArea_2.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         self.scrollAreaWidgetContents_2 = QWidget()
         self.scrollAreaWidgetContents_2.setObjectName(u"scrollAreaWidgetContents_2")
         self.scrollAreaWidgetContents_2.setGeometry(QRect(0, 0, 312, 392))
@@ -2376,6 +2380,9 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"Brain", None))
+        MainWindow.setStyleSheet(QCoreApplication.translate("MainWindow", u"QMainWindow { font-size: 10pt; }\n"
+"QGroupBox { font-size: 11pt; }\n"
+"QLabel { font-size: 10pt; }", None))
         self.actionSave.setText(QCoreApplication.translate("MainWindow", u"Save", None))
         self.actionLoad.setText(QCoreApplication.translate("MainWindow", u"Load", None))
         self.actionCortical_repartition.setText(QCoreApplication.translate("MainWindow", u"Cortical repartition", None))
@@ -2504,6 +2511,9 @@ class Ui_MainWindow(object):
 #if QT_CONFIG(shortcut)
         self.menuScreenshot.setShortcut(QCoreApplication.translate("MainWindow", u"Ctrl+N", None))
 #endif // QT_CONFIG(shortcut)
+        self.QuickSettings.setStyleSheet(QCoreApplication.translate("MainWindow", u"QTabWidget::pane { border: 0; }\n"
+"QTabBar::tab { padding: 6px 12px; font-size: 10pt; }\n"
+"QTabBar::tab:selected { font-weight: 600; }", None))
 #if QT_CONFIG(tooltip)
         self.QuickSettings.setToolTip(QCoreApplication.translate("MainWindow", u"<html><head/><body><p><br/></p></body></html>", None))
 #endif // QT_CONFIG(tooltip)
