@@ -59,6 +59,18 @@ creating a virtual environment that matches the Phase 0 baseline:
 These pins align with Python 3.9–3.12 on Windows, macOS, and Linux and will be
 revisited during the packaging overhaul in Phase 1.
 
+With the toolchain installed, ``tox`` orchestrates the main contributor
+workflows:
+
+.. code-block:: console
+
+   tox -e lint     # run Ruff
+   tox -e tests    # run the pytest suite headlessly
+   tox -e package  # build sdist/wheel artifacts
+
+The ``Makefile`` exposes matching shortcuts (``make lint``, ``make test`` and
+``make build_dist``) for projects that rely on the historical targets.
+
 Important links
 ---------------
 

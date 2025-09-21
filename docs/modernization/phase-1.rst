@@ -52,11 +52,18 @@ To build or install from a checkout::
    source .venv/bin/activate  # Windows: .venv\\Scripts\\activate
    python -m pip install --upgrade pip
    python -m pip install -r requirements/dev.txt
-   python -m build
+   
+``tox`` wraps the common workflows so contributors do not have to remember the
+exact command lines::
 
-The ``build`` command validates that the ``pyproject.toml`` metadata is
-self-consistent and produces an sdist/wheel. Contributors can also install in
-editable mode with ``pip install -e .`` when iterating locally.
+   tox -e lint     # Ruff checks
+   tox -e tests    # pytest with headless flags
+   tox -e package  # python -m build
+
+The packaging environment executes ``python -m build`` under the hood and
+validates that the ``pyproject.toml`` metadata is self-consistent. Contributors
+can also install in editable mode with ``pip install -e .`` when iterating
+locally.
 
 Next steps
 ----------
