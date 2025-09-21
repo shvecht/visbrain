@@ -75,3 +75,49 @@ class TestFigure(_TestVisbrain):
 
         # Save the picture :
         f.save(self.to_tmp_dir('figure.png'), dpi=100)
+
+    def test_layout_persistence(self):
+        """Ensure layout configurations can be saved and restored."""
+
+        files = []
+        gradients = np.linspace(0, 255, num=8, dtype=np.uint8)
+        for idx in range(4):
+            img_path = self.to_tmp_dir(f'layout_{idx}.png')
+            grid = np.outer(gradients, np.ones_like(gradients, dtype=np.uint8))
+            rgb = np.stack([
+                np.roll(grid, idx, axis=0),
+                np.roll(grid, idx, axis=1),
+                np.flipud(grid),
+            ], axis=-1)
+            Image.fromarray(rgb).save(img_path)
+            files.append(img_path)
+
+        layout_path = self.to_tmp_dir('layout.json')
+        subspace = {'left': 0.1, 'right': 0.95, 'bottom': 0.15, 'top': 0.85,
+                    'wspace': 0.2, 'hspace': 0.25}
+        figure = Figure(
+            files,
+            grid=(2, 2),
+            figtitle='Persistence',
+            figsize=(6.0, 4.0),
+            subspace=subspace,
+            y=1.1,
+            rmax=False,
+            autocrop=True,
+            autoresize={'axis': 0},
+        )
+        saved_path = figure.save_layout(layout_path)
+        assert saved_path.is_file()
+
+        loaded = Figure.load_layout(saved_path)
+        assert loaded['grid'] == (2, 2)
+        assert loaded['figtitle'] == 'Persistence'
+        assert loaded['subspace']['left'] == subspace['left']
+        assert loaded['autocrop'] is True
+        assert loaded['autoresize'] == {'axis': 0}
+
+        restored = Figure.from_layout(files, saved_path, figtitle='Restored')
+        assert restored._grid == (2, 2)
+        assert restored._figtitle == 'Restored'
+        assert restored._subspace['left'] == subspace['left']
+        assert restored._autocrop is True
