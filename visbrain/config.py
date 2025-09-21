@@ -233,6 +233,7 @@ class VisbrainConfig:
     vispy_backend: str | None = None
     show_gui: bool = True
     mpl_render: bool = False
+    theme: str = "dark"
     _pyqt_app: Optional[QtWidgets.QApplication] = field(
         default=None, init=False, repr=False
     )
@@ -305,6 +306,7 @@ class VisbrainConfig:
             vispy_backend=self.vispy_backend,
             show_gui=self.show_gui,
             mpl_render=self.mpl_render,
+            theme=self.theme,
         )
         duplicate._pyqt_app = self._pyqt_app
         duplicate._vispy_app = self._vispy_app

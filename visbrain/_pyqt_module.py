@@ -5,12 +5,13 @@ import logging
 from collections.abc import Callable, Iterable
 from typing import Any, List, Sequence, Tuple
 
-from .qt import QtGui, guard_qapp_lifecycle
+from .qt import QtGui, QtWidgets, guard_qapp_lifecycle
 
 from .utils import set_widget_size, set_log_level
 from .config import PROFILER, get_config, qt_app, vispy_app
 from .io import path_to_tmp, clean_tmp, path_to_visbrain_data
 from .resources import load_icon
+from .gui.theme import theme_manager
 
 logger = logging.getLogger('visbrain')
 
@@ -46,6 +47,8 @@ class _PyQtModule(object):
         self._register_description_hooks(to_describe)
         self._module_icon = icon
         self._show_settings = show_settings
+        self._theme_manager = theme_manager
+        self._theme_manager.ensure_application_theme()
 
     ###########################################################################
     #                               TMP FOLDER
@@ -129,6 +132,19 @@ class _PyQtModule(object):
         if app is not None:
             app.quit()
         logger.debug("App closed.")
+
+    # ------------------------------------------------------------------
+    # Theme helpers
+    # ------------------------------------------------------------------
+    def _apply_theme(self, widget: QtWidgets.QWidget | None = None) -> None:
+        """Apply the active Visbrain theme to *widget* or the module window."""
+
+        target = widget
+        if target is None:
+            target = getattr(self, "q_widget", None)
+            if target is None and isinstance(self, QtWidgets.QWidget):
+                target = self
+        self._theme_manager.apply(widget=target)
 
     # ------------------------------------------------------------------
     # Description helpers

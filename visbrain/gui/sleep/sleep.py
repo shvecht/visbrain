@@ -74,6 +74,7 @@ class Sleep(_PyQtModule):
             axis=axis,
             config_file=config_file,
         )
+        self._apply_theme()
 
     # ------------------------------------------------------------------
     # Composition accessors

@@ -141,6 +141,7 @@ class Signal(_PyQtModule, UiInit, UiElements, Visuals):
 
         # ==================== APP CREATION ====================
         UiInit.__init__(self, **kwargs)
+        self._apply_theme()
 
         # ==================== DATA CHECKING ====================
         if isinstance(data, (list, tuple)):

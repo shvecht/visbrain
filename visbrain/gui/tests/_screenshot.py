@@ -135,6 +135,7 @@ def capture_screenshot(
     *,
     widget_getter: Callable[[Any], QtWidgets.QWidget] | None = None,
     size: tuple[int, int] = (1280, 720),
+    use_vispy: bool = True,
 ) -> np.ndarray:
     """Launch a GUI module and return a screenshot as an ``ndarray``."""
 
@@ -143,19 +144,21 @@ def capture_screenshot(
     _ensure_runtime_configuration()
     widget_getter = widget_getter or (lambda instance: instance)
 
-    with qt_app(force=True, reset=True) as app, vispy_app(force=True, reset=True):
+    with contextlib.ExitStack() as stack:
+        app = stack.enter_context(qt_app(force=True, reset=True))
+        if use_vispy:
+            stack.enter_context(vispy_app(force=True, reset=True))
         if app is None:
             raise RuntimeError("Qt application could not be created")
-        with contextlib.ExitStack() as stack:
-            instance = _enter_value(stack, factory())
-            widget = widget_getter(instance)
-            if widget is None:
-                raise RuntimeError("Widget getter returned None")
-            widget.resize(*size)
-            widget.show()
-            widget.raise_()
-            _drain_events(app)
-            screenshot = _grab_widget(widget)
+        instance = _enter_value(stack, factory())
+        widget = widget_getter(instance)
+        if widget is None:
+            raise RuntimeError("Widget getter returned None")
+        widget.resize(*size)
+        widget.show()
+        widget.raise_()
+        _drain_events(app)
+        screenshot = _grab_widget(widget)
         _drain_events(app, cycles=5)
     return screenshot
 

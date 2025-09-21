@@ -11,6 +11,7 @@ from visbrain.io import (
     write_csv,
     write_txt,
 )
+from visbrain.gui.theme import theme_manager
 
 
 class UiMenu(HelpMenu):
@@ -30,6 +31,12 @@ class UiMenu(HelpMenu):
         self.actionGrid.triggered.connect(self._fcn_menu_disp_grid)
         self.actionSignal.triggered.connect(self._fcn_menu_disp_signal)
         self.menuScreenshot.triggered.connect(self._fcn_menu_disp_screenshot)
+        self.menuDisplay.addSeparator()
+        self._theme_menu_controller = theme_manager.install_menu(
+            self,
+            self.menuDisplay,
+            title="Theme",
+        )
 
     def _fcn_save_annotations(self, *args, filename=None):
         """Save annotations."""

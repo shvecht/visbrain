@@ -99,6 +99,7 @@ class Brain(_PyQtModule, UiInit, UiElements, Visuals, BrainCbar,
 
         # ====================== Canvas creation ======================
         UiInit.__init__(self, bgcolor)  # GUI creation + canvas
+        self._apply_theme()
         PROFILER("Canvas creation")
 
         # ====================== App creation ======================
