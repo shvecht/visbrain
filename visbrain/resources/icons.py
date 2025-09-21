@@ -5,7 +5,7 @@ import logging
 from importlib import resources
 from typing import Optional
 
-from ..qt import Qt, QtCore, QtGui
+from visbrain.qt import Qt, QtCore, QtGui
 
 logger = logging.getLogger("visbrain")
 

@@ -59,7 +59,9 @@ class UiMenu(HelpMenu):
         # _____________________________________________________________________
         #                                 EXIT
         # _____________________________________________________________________
-        self.menuExit.triggered.connect(QtWidgets.qApp.quit)
+        quit_slot = getattr(QtWidgets.QApplication.instance(), "quit", None)
+        if callable(quit_slot):
+            self.menuExit.triggered.connect(quit_slot)
 
         # _____________________________________________________________________
         #                              DISPLAY

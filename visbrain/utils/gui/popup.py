@@ -121,23 +121,42 @@ class HelpMenu(object):
         """Init."""
         _translate = QtCore.QCoreApplication.translate
         # Main Help menu creation :
-        help_menu = QtWidgets.QMenu('Help', self)
-        self.menuBar().addMenu(help_menu)
+        menu_bar = None
+        get_menu_bar = getattr(self, "menuBar", None)
+        if callable(get_menu_bar):
+            try:
+                menu_bar = get_menu_bar()
+            except Exception:  # pragma: no cover - defensive fallback
+                menu_bar = None
+        parent_widget = menu_bar
+        if parent_widget is None:
+            parent_widget = getattr(self, "q_widget", None)
+            if not isinstance(parent_widget, QtWidgets.QWidget):
+                parent_widget = None
+        help_menu = QtWidgets.QMenu('Help', parent_widget)
+        if isinstance(menu_bar, QtWidgets.QMenuBar):
+            menu_bar.addMenu(help_menu)
+        elif hasattr(self, "menuBar"):
+            # Fallback for legacy widgets exposing menuBar attribute
+            try:
+                self.menuBar().addMenu(help_menu)
+            except Exception:  # pragma: no cover - defensive fallback
+                pass
         if add_shortcuts:
             # Shortcuts popup window :
             self._shpopup = ShortcutPopup()
             # Shortcuts :
-            shortcuts = QtWidgets.QAction("&Shortcuts", self)
+            shortcuts = QtWidgets.QAction("&Shortcuts", help_menu)
             shortcuts.setShortcut(_translate("MainWindow", "Ctrl+T"))
             shortcuts.triggered.connect(self._shpopup.show)
             help_menu.addAction(shortcuts)
         # Help section submenu :
-        help_section = QtWidgets.QMenu('Open help section about', self)
+        help_section = QtWidgets.QMenu('Open help section about', help_menu)
         help_menu.addMenu(help_section)
 
         for menu, url in doc_section.items():
             # Create action :
-            section_action = QtWidgets.QAction("&" + menu, self)
+            section_action = QtWidgets.QAction("&" + menu, help_section)
             # Action function :
 
             def define(url):
@@ -150,7 +169,7 @@ class HelpMenu(object):
             # Add action to the menu :
             help_section.addAction(section_action)
         # PDF documentation action :
-        pdf_doc = QtWidgets.QAction("&Download doc (pdf)", self)
+        pdf_doc = QtWidgets.QAction("&Download doc (pdf)", help_menu)
         pdf_doc.triggered.connect(self._fcn_open_pdf_doc)
         help_menu.addAction(pdf_doc)
 
