@@ -18,10 +18,19 @@ import os
 from os.path import relpath, dirname
 import sys
 from datetime import date
+import importlib.util
+from pathlib import Path
 
 import sphinx_bootstrap_theme
 from sphinx_gallery.sorting import FileNameSortKey, ExplicitOrder
 from numpydoc import numpydoc, docscrape
+
+_ICONS_PATH = Path(__file__).resolve().parents[1] / "visbrain" / "resources" / "icons.py"
+_ICONS_SPEC = importlib.util.spec_from_file_location("visbrain.resources.icons", _ICONS_PATH)
+if _ICONS_SPEC is not None and _ICONS_SPEC.loader is not None:
+    _ICONS_MODULE = importlib.util.module_from_spec(_ICONS_SPEC)
+    _ICONS_SPEC.loader.exec_module(_ICONS_MODULE)
+    sys.modules["visbrain.resources.icons"] = _ICONS_MODULE
 
 import visbrain
 from visbrain.config import get_config
@@ -64,7 +73,7 @@ autodoc_default_flags = ['members', 'inherited-members', 'no-undoc-members']
 sphinx_gallery_conf = {
     # path to your examples scripts
     'examples_dirs': '../examples',
-    'sphinx_gallery': None,
+    'plot_gallery': False,
     'reference_url': {
         'visbrain': None,
         'matplotlib': 'http://matplotlib.org',
@@ -123,7 +132,7 @@ release = visbrain.__version__
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -328,11 +337,11 @@ latex_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    # 'python': ('http://docs.python.org/', None),
-    'numpy': ('http://docs.scipy.org/doc/numpy-dev/', None),
-    'scipy': ('http://scipy.github.io/devdocs/', None),
-    'matplotlib': ('http://matplotlib.org', None),
-    'nibabel': ('http://nipy.org/nibabel', None),
+    # 'python': ('https://docs.python.org/3/', None),
+    'numpy': ('https://numpy.org/doc/stable/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/', None),
+    'matplotlib': ('https://matplotlib.org/stable/', None),
+    'nibabel': ('https://nipy.org/nibabel/', None),
 }
 
 # -- Options for manual page output ---------------------------------------
@@ -393,7 +402,7 @@ texinfo_documents = [
 # -----------------------------------------------------------------------------
 
 def setup(app):
-    app.add_stylesheet("visbrain_styles.css")
+    app.add_css_file("visbrain_styles.css")
 
 
 def linkcode_resolve(domain, info):
