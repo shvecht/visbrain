@@ -2,6 +2,7 @@
 import vispy.scene.cameras as viscam
 
 from visbrain.utils import HelpMenu
+from visbrain.gui.theme import theme_manager
 
 
 class UiMenu(HelpMenu):
@@ -45,6 +46,14 @@ class UiMenu(HelpMenu):
         self.menuDispROI.triggered.connect(self._fcn_menu_disp_roi)
         # Colorbar :
         self.menuDispCbar.triggered.connect(self._fcn_menu_disp_cbar)
+
+        before_action = getattr(self, "actionCamera_2", None)
+        self._theme_menu_controller = theme_manager.install_menu(
+            self,
+            self.menuDisplay,
+            title="Theme",
+            before=before_action,
+        )
 
         # =============================================================
         # ROTATION

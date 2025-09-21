@@ -9,6 +9,7 @@ from visbrain.io import (dialog_save, dialog_load, write_fig_hyp, write_csv,
                          write_txt, write_hypno, read_hypno,
                          annotations_to_array, oversample_hypno,
                          save_config_json)
+from visbrain.gui.theme import theme_manager
 
 
 class UiMenu(HelpMenu):
@@ -83,6 +84,12 @@ class UiMenu(HelpMenu):
         self.menuDispTopo.triggered.connect(self._disptog_topo)
         # Zoom :
         self.menuDispZoom.triggered.connect(self._disptog_zoom)
+        self.menuDisplay.addSeparator()
+        self._theme_menu_controller = theme_manager.install_menu(
+            self,
+            self.menuDisplay,
+            title="Theme",
+        )
 
     ###########################################################################
     ###########################################################################
