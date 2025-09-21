@@ -16,6 +16,7 @@ from visbrain.utils import (color2vb, PrepareData, cmap_to_glsl)
 from visbrain.utils.sleep.event import _index_to_events
 from visbrain.visuals import TopoMesh, TFmapsMesh
 from visbrain.config import PROFILER
+from visbrain.visuals.context import create_scene_node
 
 logger = logging.getLogger('visbrain')
 
@@ -245,8 +246,7 @@ class ChannelPlot(PrepareData):
         for i, k in enumerate(channels):
             # ----------------------------------------------
             # Create a node parent :
-            node = scene.Node(name=k + 'plot')
-            node.parent = parent[i].wc.scene
+            node = create_scene_node(parent[i].wc, name=k + 'plot')
             self.node.append(node)
 
             # ----------------------------------------------

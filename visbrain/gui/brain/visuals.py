@@ -1,7 +1,6 @@
 """The BaseVisual class thath initialize all visual elements."""
 import logging
 
-from vispy import scene
 import vispy.visuals.transforms as vist
 
 from visbrain.objects import (CombineSources, CombineConnect,
@@ -9,6 +8,7 @@ from visbrain.objects import (CombineSources, CombineConnect,
                               CombineVectors, BrainObj, VolumeObj, RoiObj,
                               CrossSecObj)
 from visbrain.config import PROFILER
+from visbrain.visuals.context import create_scene_node
 
 logger = logging.getLogger('visbrain')
 
@@ -25,8 +25,12 @@ class Visuals(object):
     def __init__(self, canvas, **kwargs):
         """Init."""
         # Create a root node :
-        self._vbNode = scene.Node(name='Brain')
-        self._vbNode.transform = vist.STTransform(scale=[self._gl_scale] * 3)
+        transform = vist.STTransform(scale=[self._gl_scale] * 3)
+        self._vbNode = create_scene_node(
+            canvas,
+            name='Brain',
+            transform=transform,
+        )
         logger.debug("Brain rescaled " + str([self._gl_scale] * 3))
         PROFILER("Root node", level=1)
 
