@@ -26,6 +26,14 @@ class TestSignal(_TestVisbrain):
     ###########################################################################
     #                                 LABELS
     ###########################################################################
+    def test_visual_default_scene(self):
+        """Channel visuals attach to the expected scene graph."""
+
+        first_canvas = sig._chanCanvas[0]
+        node = sig._chan.node[0]
+        assert node.parent is first_canvas.wc.scene
+        assert sig._chan.mesh[0].parent is node
+
     def test_xlabel(self):
         """Test setting xlabel."""
         # Text :

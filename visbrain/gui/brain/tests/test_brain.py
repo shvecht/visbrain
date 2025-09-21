@@ -7,6 +7,8 @@ from itertools import product
 from vispy.app.canvas import MouseEvent, KeyEvent
 # from vispy.util.keys import Key
 
+import vispy.visuals.transforms as vist
+
 from visbrain.gui import Brain
 from visbrain.objects import (SourceObj, ConnectObj, TimeSeries3DObj,
                               Picture3DObj, RoiObj, VolumeObj, CrossSecObj,
@@ -86,6 +88,14 @@ class TestBrain(_TestVisbrain):
     ###########################################################################
     #                                 BRAIN
     ###########################################################################
+    def test_visual_default_scene(self):
+        """The brain scene uses a dedicated transform node."""
+
+        assert vb._vbNode.parent is vb.view.wc.scene
+        assert isinstance(vb._vbNode.transform, vist.STTransform)
+        expected = (vb._gl_scale,) * 3
+        assert tuple(vb._vbNode.transform.scale) == expected
+
     def test_scene_rotation(self):
         """Test scene rotations/."""
         rotations = ['axial_0', 'coronal_0', 'sagittal_0',

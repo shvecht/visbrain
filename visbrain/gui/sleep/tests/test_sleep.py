@@ -39,6 +39,15 @@ def test_facade_components(sleep_facade):
     assert sleep_facade.view is sleep_facade.controller._view
 
 
+def test_visual_scenegraph(sleep_facade):
+    """Channel visuals attach to the channel canvas scene."""
+
+    node = sleep_facade._chan.node[0]
+    canvas = sleep_facade._chanCanvas[0]
+    assert node.parent is canvas.wc.scene
+    assert sleep_facade._chan.mesh[0].parent is node
+
+
 def test_detection_flow_through_facade(sleep_facade, tmp_path):
     """Custom detections propagate through the full GUI stack."""
 
