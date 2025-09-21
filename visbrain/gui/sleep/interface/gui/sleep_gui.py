@@ -2414,15 +2414,16 @@ class Ui_MainWindow(object):
         self.verticalLayout_15.setSpacing(0)
         self.verticalLayout_15.setObjectName(u"verticalLayout_15")
         self.verticalLayout_15.setContentsMargins(0, 0, 0, 0)
-        self.gridLayout_7 = QGridLayout()
-        self.gridLayout_7.setObjectName(u"gridLayout_7")
-        self.gridLayout_7.setHorizontalSpacing(7)
-        self.gridLayout_7.setVerticalSpacing(2)
-        self.gridLayout_7.setContentsMargins(-1, 0, -1, -1)
+        self._sliderPanel = QWidget(self._slFrame)
+        self._sliderPanel.setObjectName(u"_sliderPanel")
+        self._sliderPanelLayout = QVBoxLayout(self._sliderPanel)
+        self._sliderPanelLayout.setSpacing(6)
+        self._sliderPanelLayout.setObjectName(u"_sliderPanelLayout")
+        self._sliderPanelLayout.setContentsMargins(0, 0, 0, 0)
         self.horizontalLayout_22 = QHBoxLayout()
         self.horizontalLayout_22.setObjectName(u"horizontalLayout_22")
         self.horizontalLayout_22.setContentsMargins(-1, 3, -1, -1)
-        self._txtCursor = QLabel(self._slFrame)
+        self._txtCursor = QLabel(self._sliderPanel)
         self._txtCursor.setObjectName(u"_txtCursor")
         font4 = QFont()
         font4.setBold(True)
@@ -2434,7 +2435,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_22.addItem(self.horizontalSpacer_18)
 
-        self._SlText = QLabel(self._slFrame)
+        self._SlText = QLabel(self._sliderPanel)
         self._SlText.setObjectName(u"_SlText")
         self._SlText.setAlignment(Qt.AlignCenter)
         self._SlText.setMargin(0)
@@ -2445,7 +2446,7 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_22.addItem(self.horizontalSpacer_33)
 
-        self._AnnotateRun = QPushButton(self._slFrame)
+        self._AnnotateRun = QPushButton(self._sliderPanel)
         self._AnnotateRun.setObjectName(u"_AnnotateRun")
 
         self.horizontalLayout_22.addWidget(self._AnnotateRun)
@@ -2455,156 +2456,185 @@ class Ui_MainWindow(object):
         self.horizontalLayout_22.addItem(self.horizontalSpacer_29)
 
 
-        self.gridLayout_7.addLayout(self.horizontalLayout_22, 0, 0, 1, 18)
+        self._sliderPanelLayout.addLayout(self.horizontalLayout_22)
 
-        self._SlVal = QSlider(self._slFrame)
+        self._SlVal = QSlider(self._sliderPanel)
         self._SlVal.setObjectName(u"_SlVal")
         self._SlVal.setOrientation(Qt.Horizontal)
         self._SlVal.setTickPosition(QSlider.NoTicks)
         self._SlVal.setTickInterval(10)
 
-        self.gridLayout_7.addWidget(self._SlVal, 1, 0, 1, 18)
+        self._sliderPanelLayout.addWidget(self._SlVal)
 
-        self.label = QLabel(self._slFrame)
+        self._sliderControls = QWidget(self._sliderPanel)
+        self._sliderControls.setObjectName(u"_sliderControls")
+        self._sliderControlsLayout = QGridLayout(self._sliderControls)
+        self._sliderControlsLayout.setObjectName(u"_sliderControlsLayout")
+        self._sliderControlsLayout.setHorizontalSpacing(12)
+        self._sliderControlsLayout.setVerticalSpacing(4)
+        self._sliderControlsLayout.setContentsMargins(0, 0, 0, 0)
+        self._sliderGotoLayout = QHBoxLayout()
+        self._sliderGotoLayout.setSpacing(6)
+        self._sliderGotoLayout.setObjectName(u"_sliderGotoLayout")
+        self._sliderGotoLayout.setContentsMargins(0, 0, 0, 0)
+        self.label = QLabel(self._sliderControls)
         self.label.setObjectName(u"label")
 
-        self.gridLayout_7.addWidget(self.label, 2, 0, 1, 1)
+        self._sliderGotoLayout.addWidget(self.label)
 
-        self._SlGoto = QDoubleSpinBox(self._slFrame)
+        self._SlGoto = QDoubleSpinBox(self._sliderControls)
         self._SlGoto.setObjectName(u"_SlGoto")
         self._SlGoto.setDecimals(1)
 
-        self.gridLayout_7.addWidget(self._SlGoto, 2, 1, 1, 1)
+        self._sliderGotoLayout.addWidget(self._SlGoto)
 
-        self.label_12 = QLabel(self._slFrame)
+        self.label_12 = QLabel(self._sliderControls)
         self.label_12.setObjectName(u"label_12")
 
-        self.gridLayout_7.addWidget(self.label_12, 2, 2, 1, 1)
+        self._sliderGotoLayout.addWidget(self.label_12)
 
-        self.horizontalSpacer_4 = QSpacerItem(40, 20, QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Minimum)
 
-        self.gridLayout_7.addItem(self.horizontalSpacer_4, 2, 3, 1, 1)
+        self._sliderControlsLayout.addLayout(self._sliderGotoLayout, 0, 0, 1, 1)
 
-        self.label_3 = QLabel(self._slFrame)
+        self._sliderWindowLayout = QHBoxLayout()
+        self._sliderWindowLayout.setSpacing(6)
+        self._sliderWindowLayout.setObjectName(u"_sliderWindowLayout")
+        self._sliderWindowLayout.setContentsMargins(0, 0, 0, 0)
+        self.label_3 = QLabel(self._sliderControls)
         self.label_3.setObjectName(u"label_3")
 
-        self.gridLayout_7.addWidget(self.label_3, 2, 4, 1, 1)
+        self._sliderWindowLayout.addWidget(self.label_3)
 
-        self._SigWin = QDoubleSpinBox(self._slFrame)
+        self._SigWin = QDoubleSpinBox(self._sliderControls)
         self._SigWin.setObjectName(u"_SigWin")
         self._SigWin.setDecimals(1)
         self._SigWin.setMaximum(1000.000000000000000)
         self._SigWin.setValue(30.000000000000000)
 
-        self.gridLayout_7.addWidget(self._SigWin, 2, 5, 1, 1)
+        self._sliderWindowLayout.addWidget(self._SigWin)
 
-        self.label_4 = QLabel(self._slFrame)
+        self.label_4 = QLabel(self._sliderControls)
         self.label_4.setObjectName(u"label_4")
 
-        self.gridLayout_7.addWidget(self.label_4, 2, 6, 1, 1)
+        self._sliderWindowLayout.addWidget(self.label_4)
 
-        self.horizontalSpacer_5 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
-        self.gridLayout_7.addItem(self.horizontalSpacer_5, 2, 7, 1, 1)
+        self._sliderControlsLayout.addLayout(self._sliderWindowLayout, 0, 1, 1, 1)
 
-        self.label_3_1 = QLabel(self._slFrame)
+        self._sliderScoringWindowLayout = QHBoxLayout()
+        self._sliderScoringWindowLayout.setSpacing(6)
+        self._sliderScoringWindowLayout.setObjectName(u"_sliderScoringWindowLayout")
+        self._sliderScoringWindowLayout.setContentsMargins(0, 0, 0, 0)
+        self.label_3_1 = QLabel(self._sliderControls)
         self.label_3_1.setObjectName(u"label_3_1")
 
-        self.gridLayout_7.addWidget(self.label_3_1, 2, 8, 1, 1)
+        self._sliderScoringWindowLayout.addWidget(self.label_3_1)
 
-        self._ScorWin = QDoubleSpinBox(self._slFrame)
+        self._ScorWin = QDoubleSpinBox(self._sliderControls)
         self._ScorWin.setObjectName(u"_ScorWin")
         self._ScorWin.setDecimals(1)
         self._ScorWin.setMinimum(0.100000000000000)
         self._ScorWin.setMaximum(1000.000000000000000)
         self._ScorWin.setValue(30.000000000000000)
 
-        self.gridLayout_7.addWidget(self._ScorWin, 2, 9, 1, 1)
+        self._sliderScoringWindowLayout.addWidget(self._ScorWin)
 
-        self.label_4_1 = QLabel(self._slFrame)
+        self.label_4_1 = QLabel(self._sliderControls)
         self.label_4_1.setObjectName(u"label_4_1")
 
-        self.gridLayout_7.addWidget(self.label_4_1, 2, 10, 1, 1)
+        self._sliderScoringWindowLayout.addWidget(self.label_4_1)
 
-        self.horizontalSpacer_5_1 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
-        self.gridLayout_7.addItem(self.horizontalSpacer_5_1, 2, 11, 1, 1)
+        self._sliderControlsLayout.addLayout(self._sliderScoringWindowLayout, 0, 2, 1, 1)
 
-        self.label_5 = QLabel(self._slFrame)
+        self._sliderStepLayout = QHBoxLayout()
+        self._sliderStepLayout.setSpacing(6)
+        self._sliderStepLayout.setObjectName(u"_sliderStepLayout")
+        self._sliderStepLayout.setContentsMargins(0, 0, 0, 0)
+        self.label_5 = QLabel(self._sliderControls)
         self.label_5.setObjectName(u"label_5")
 
-        self.gridLayout_7.addWidget(self.label_5, 2, 12, 1, 1)
+        self._sliderStepLayout.addWidget(self.label_5)
 
-        self._SigSlStep = QDoubleSpinBox(self._slFrame)
+        self._SigSlStep = QDoubleSpinBox(self._sliderControls)
         self._SigSlStep.setObjectName(u"_SigSlStep")
         self._SigSlStep.setDecimals(1)
         self._SigSlStep.setMinimum(0.100000000000000)
         self._SigSlStep.setValue(30.000000000000000)
 
-        self.gridLayout_7.addWidget(self._SigSlStep, 2, 13, 1, 1)
+        self._sliderStepLayout.addWidget(self._SigSlStep)
 
-        self.label_6 = QLabel(self._slFrame)
+        self.label_6 = QLabel(self._sliderControls)
         self.label_6.setObjectName(u"label_6")
 
-        self.gridLayout_7.addWidget(self.label_6, 2, 14, 1, 1)
+        self._sliderStepLayout.addWidget(self.label_6)
 
-        self.horizontalSpacer_6 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
-        self.gridLayout_7.addItem(self.horizontalSpacer_6, 2, 15, 1, 1)
+        self._sliderControlsLayout.addLayout(self._sliderStepLayout, 0, 3, 1, 1)
 
-        self.label_31 = QLabel(self._slFrame)
+        self._sliderRuleLayout = QHBoxLayout()
+        self._sliderRuleLayout.setSpacing(6)
+        self._sliderRuleLayout.setObjectName(u"_sliderRuleLayout")
+        self._sliderRuleLayout.setContentsMargins(0, 0, 0, 0)
+        self.label_31 = QLabel(self._sliderControls)
         self.label_31.setObjectName(u"label_31")
 
-        self.gridLayout_7.addWidget(self.label_31, 2, 16, 1, 1)
+        self._sliderRuleLayout.addWidget(self.label_31)
 
-        self._slRules = QComboBox(self._slFrame)
+        self._slRules = QComboBox(self._sliderControls)
         self._slRules.addItem("")
         self._slRules.addItem("")
         self._slRules.addItem("")
         self._slRules.setObjectName(u"_slRules")
 
-        self.gridLayout_7.addWidget(self._slRules, 2, 17, 1, 1)
+        self._sliderRuleLayout.addWidget(self._slRules)
+
+
+        self._sliderControlsLayout.addLayout(self._sliderRuleLayout, 0, 4, 1, 1)
 
         self.horizontalSpacer_3 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
-        self.gridLayout_7.addItem(self.horizontalSpacer_3, 2, 18, 1, 1)
+        self._sliderControlsLayout.addItem(self.horizontalSpacer_3, 0, 5, 1, 1)
+
+
+        self._sliderPanelLayout.addWidget(self._sliderControls)
 
         self.horizontalLayout_22_1 = QHBoxLayout()
         self.horizontalLayout_22_1.setObjectName(u"horizontalLayout_22_1")
         self.horizontalLayout_22_1.setContentsMargins(-1, -1, -1, 3)
-        self._slGrid = QCheckBox(self._slFrame)
+        self._slGrid = QCheckBox(self._sliderPanel)
         self._slGrid.setObjectName(u"_slGrid")
         self._slGrid.setChecked(False)
 
         self.horizontalLayout_22_1.addWidget(self._slGrid)
 
-        self._slAbsTime = QCheckBox(self._slFrame)
+        self._slAbsTime = QCheckBox(self._sliderPanel)
         self._slAbsTime.setObjectName(u"_slAbsTime")
 
         self.horizontalLayout_22_1.addWidget(self._slAbsTime)
 
-        self._slMagnify = QCheckBox(self._slFrame)
+        self._slMagnify = QCheckBox(self._sliderPanel)
         self._slMagnify.setObjectName(u"_slMagnify")
 
         self.horizontalLayout_22_1.addWidget(self._slMagnify)
 
-        self._ScorWinVisible = QCheckBox(self._slFrame)
+        self._ScorWinVisible = QCheckBox(self._sliderPanel)
         self._ScorWinVisible.setObjectName(u"_ScorWinVisible")
         self._ScorWinVisible.setChecked(False)
 
         self.horizontalLayout_22_1.addWidget(self._ScorWinVisible)
 
-        self._LockScorSigWins = QCheckBox(self._slFrame)
+        self._LockScorSigWins = QCheckBox(self._sliderPanel)
         self._LockScorSigWins.setObjectName(u"_LockScorSigWins")
         self._LockScorSigWins.setChecked(True)
 
         self.horizontalLayout_22_1.addWidget(self._LockScorSigWins)
 
 
-        self.gridLayout_7.addLayout(self.horizontalLayout_22_1, 3, 0, 1, 18)
+        self._sliderPanelLayout.addLayout(self.horizontalLayout_22_1)
 
 
-        self.verticalLayout_15.addLayout(self.gridLayout_7)
+        self.verticalLayout_15.addWidget(self._sliderPanel)
 
 
         self.horizontalLayout_3.addWidget(self._slFrame)
@@ -3173,6 +3203,7 @@ class Ui_MainWindow(object):
         self._txtCursor.setText(QCoreApplication.translate("MainWindow", u"[...]", None))
         self._SlText.setText(QCoreApplication.translate("MainWindow", u"TextLabel", None))
         self._AnnotateRun.setText(QCoreApplication.translate("MainWindow", u"Annotate", None))
+        self._sliderControlsLayout.setColumnStretch(QCoreApplication.translate("MainWindow", u"0,0,0,0,0,1", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"Go to", None))
         self.label_12.setText(QCoreApplication.translate("MainWindow", u"sec", None))
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"Window", None))
