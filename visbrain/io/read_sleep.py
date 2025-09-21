@@ -22,7 +22,7 @@ from visbrain.io.mneio import mne_switch
 from visbrain.io.rw_hypno import (read_hypno, oversample_hypno)
 from visbrain.io.rw_utils import get_file_ext
 from visbrain.io.write_data import write_csv
-from visbrain.io import merge_annotations
+from visbrain.io.read_annotations import merge_annotations
 
 from visbrain.utils.others import get_dsf
 from visbrain.utils.mesh import vispy_array
