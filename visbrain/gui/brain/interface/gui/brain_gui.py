@@ -178,6 +178,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.setSizeConstraint(QLayout.SetDefaultConstraint)
         self.QuickSettings = QTabWidget(self.q_widget)
         self.QuickSettings.setObjectName(u"QuickSettings")
+        self.QuickSettings.setFocusPolicy(Qt.StrongFocus)
         self.QuickSettings.setMaximumSize(QSize(16777215, 16777215))
         font = QFont()
         font.setBold(False)
@@ -956,6 +957,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_9.setObjectName(u"verticalLayout_9")
         self._source_tab = QTabWidget(self._sources_page)
         self._source_tab.setObjectName(u"_source_tab")
+        self._source_tab.setFocusPolicy(Qt.StrongFocus)
         self.tab_2 = QWidget()
         self.tab_2.setObjectName(u"tab_2")
         self.verticalLayout_24 = QVBoxLayout(self.tab_2)
@@ -2225,6 +2227,7 @@ class Ui_MainWindow(object):
 
         self.progressBar = QProgressBar(self.q_widget)
         self.progressBar.setObjectName(u"progressBar")
+        self.progressBar.setFocusPolicy(Qt.TabFocus)
         self.progressBar.setValue(0)
 
         self.verticalLayout_4.addWidget(self.progressBar)
@@ -2237,6 +2240,7 @@ class Ui_MainWindow(object):
         sizePolicy3.setVerticalStretch(0)
         sizePolicy3.setHeightForWidth(self._objsPage.sizePolicy().hasHeightForWidth())
         self._objsPage.setSizePolicy(sizePolicy3)
+        self._objsPage.setFocusPolicy(Qt.StrongFocus)
         self._BrainPage = QWidget()
         self._BrainPage.setObjectName(u"_BrainPage")
         self.horizontalLayout_7 = QHBoxLayout(self._BrainPage)
@@ -2325,6 +2329,9 @@ class Ui_MainWindow(object):
         self.statusbar = QStatusBar(MainWindow)
         self.statusbar.setObjectName(u"statusbar")
         MainWindow.setStatusBar(self.statusbar)
+        QWidget.setTabOrder(self.QuickSettings, self._obj_type_lst)
+        QWidget.setTabOrder(self._obj_type_lst, self._source_tab)
+        QWidget.setTabOrder(self._source_tab, self.progressBar)
 
         self.menubar.addAction(self.menuFiles.menuAction())
         self.menubar.addAction(self.menuDisplay.menuAction())

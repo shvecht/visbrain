@@ -201,6 +201,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
         self.QuickSettings = QTabWidget(self.q_widget)
         self.QuickSettings.setObjectName(u"QuickSettings")
+        self.QuickSettings.setFocusPolicy(Qt.StrongFocus)
         self.QuickSettings.setMaximumSize(QSize(16777215, 16777215))
         self.QuickSettings.setAutoFillBackground(False)
         self.QuickSettings.setTabShape(QTabWidget.Rounded)
@@ -249,6 +250,7 @@ class Ui_MainWindow(object):
 
         self._stacked_panels = QStackedWidget(self.q_Panels)
         self._stacked_panels.setObjectName(u"_stacked_panels")
+        self._stacked_panels.setFocusPolicy(Qt.StrongFocus)
         self._stacked_panels.setFrameShape(QFrame.NoFrame)
         self._channels_page = QWidget()
         self._channels_page.setObjectName(u"_channels_page")
@@ -1064,6 +1066,7 @@ class Ui_MainWindow(object):
 
         self._stacked_tools = QStackedWidget(self.q_Tools)
         self._stacked_tools.setObjectName(u"_stacked_tools")
+        self._stacked_tools.setFocusPolicy(Qt.StrongFocus)
         self._sigproc_page = QWidget()
         self._sigproc_page.setObjectName(u"_sigproc_page")
         self.verticalLayout_25 = QVBoxLayout(self._sigproc_page)
@@ -1695,6 +1698,7 @@ class Ui_MainWindow(object):
 
         self._stacked_detections = QStackedWidget(self.groupBox_2)
         self._stacked_detections.setObjectName(u"_stacked_detections")
+        self._stacked_detections.setFocusPolicy(Qt.StrongFocus)
         sizePolicy4 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
         sizePolicy4.setHorizontalStretch(0)
         sizePolicy4.setVerticalStretch(0)
@@ -2673,6 +2677,9 @@ class Ui_MainWindow(object):
         self.statusbar = QStatusBar(MainWindow)
         self.statusbar.setObjectName(u"statusbar")
         MainWindow.setStatusBar(self.statusbar)
+        QWidget.setTabOrder(self.QuickSettings, self._stacked_panels)
+        QWidget.setTabOrder(self._stacked_panels, self._stacked_tools)
+        QWidget.setTabOrder(self._stacked_tools, self._stacked_detections)
 
         self.menubar.addAction(self.menuFiles.menuAction())
         self.menubar.addAction(self.menuDisplay.menuAction())

@@ -16,6 +16,7 @@ from .cbar import BrainCbar
 from .user import BrainUserMethods
 from visbrain._pyqt_module import _PyQtModule
 from visbrain.config import PROFILER
+from visbrain.gui._accessibility import install_action_shortcuts
 
 logger = logging.getLogger('visbrain')
 
@@ -109,6 +110,7 @@ class Brain(_PyQtModule, UiInit, UiElements, Visuals, BrainCbar,
         # ====================== Ui interactions ======================
         UiElements.__init__(self)  # GUI interactions
         PROFILER("Ui interactions")
+        self._qt_action_shortcuts = install_action_shortcuts(self)
         self._shpopup.set_shortcuts(self.sh)  # shortcuts dict
 
         # ====================== Cameras ======================

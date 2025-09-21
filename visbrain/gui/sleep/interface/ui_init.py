@@ -14,6 +14,7 @@ import vispy.visuals.transforms as vist
 from ..visuals.marker import Markers
 from .gui import Ui_MainWindow
 from visbrain.utils import color2vb
+from visbrain.gui._accessibility import annotate_widget_accessibility
 
 
 class UiInit(QtWidgets.QMainWindow, Ui_MainWindow, app.Canvas):
@@ -24,6 +25,14 @@ class UiInit(QtWidgets.QMainWindow, Ui_MainWindow, app.Canvas):
         # Create the main window :
         super(UiInit, self).__init__(None)
         self.setupUi(self)
+        self.setAccessibleName("Sleep window")
+        self.setAccessibleDescription(
+            (
+                "Sleep scoring workspace with stacked panels for channels, tools, "
+                "and detections."
+            )
+        )
+        annotate_widget_accessibility(self)
 
 
 class TimeAxis(object):

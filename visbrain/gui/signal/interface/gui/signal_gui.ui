@@ -87,6 +87,9 @@
            </property>
            <item>
             <widget class="QTabWidget" name="QuickSettings">
+             <property name="focusPolicy">
+              <enum>Qt::StrongFocus</enum>
+             </property>
              <property name="maximumSize">
               <size>
                <width>16777215</width>
@@ -3191,12 +3194,17 @@ type</string>
     <string>Annotations</string>
    </property>
   </action>
-  <action name="loadAnnotations">
-   <property name="text">
-    <string>Annotations</string>
-   </property>
-  </action>
- </widget>
+ <action name="loadAnnotations">
+  <property name="text">
+   <string>Annotations</string>
+  </property>
+ </action>
+</widget>
+ <tabstops>
+  <tabstop>QuickSettings</tabstop>
+  <tabstop>_sig_title</tabstop>
+  <tabstop>_sig_form</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

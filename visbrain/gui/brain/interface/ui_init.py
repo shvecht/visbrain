@@ -6,13 +6,14 @@ Grouped components :
     * User shortcuts
 """
 
-from visbrain.qt import QtWidgets
+from visbrain.qt import QtCore, QtWidgets
 
 from vispy import app
 from vispy.scene.cameras import TurntableCamera
 
 from .gui import Ui_MainWindow
 from visbrain.objects import VisbrainCanvas
+from visbrain.gui._accessibility import annotate_widget_accessibility
 
 
 class BrainShortcuts(object):
@@ -123,6 +124,22 @@ class UiInit(QtWidgets.QMainWindow, Ui_MainWindow, app.Canvas, BrainShortcuts):
         # Create the main window :
         super(UiInit, self).__init__(None)
         self.setupUi(self)
+        self.setAccessibleName("Brain window")
+        self.setAccessibleDescription(
+            "Interactive 3D brain visualization with keyboard accessible controls."
+        )
+        annotate_widget_accessibility(
+            self,
+            extra={
+                "_objsPage": (
+                    "Visualization panels",
+                    (
+                        "Stacked configuration panels controlling brain, sources, "
+                        "and derived visualizations."
+                    ),
+                ),
+            },
+        )
 
         #######################################################################
         #                            BRAIN CANVAS
@@ -132,12 +149,22 @@ class UiInit(QtWidgets.QMainWindow, Ui_MainWindow, app.Canvas, BrainShortcuts):
         self.view = VisbrainCanvas(name='MainCanvas', camera=self._camera,
                                    **cdict)
         self.vBrain.addWidget(self.view.canvas.native)
+        self.view.canvas.native.setFocusPolicy(QtCore.Qt.StrongFocus)
+        self.view.canvas.native.setAccessibleName("Brain canvas")
+        self.view.canvas.native.setAccessibleDescription(
+            "Primary 3D canvas displaying the brain surface and overlays."
+        )
 
         #######################################################################
         #                         CROSS-SECTIONS CANVAS
         #######################################################################
         self._csView = VisbrainCanvas(name='SplittedCrossSections', **cdict)
         self._axialLayout.addWidget(self._csView.canvas.native)
+        self._csView.canvas.native.setFocusPolicy(QtCore.Qt.StrongFocus)
+        self._csView.canvas.native.setAccessibleName("Cross-sections canvas")
+        self._csView.canvas.native.setAccessibleDescription(
+            "Orthogonal cross-section views linked to the main brain canvas."
+        )
 
         # Initialize shortcuts :
         BrainShortcuts.__init__(self, self.view.canvas)
