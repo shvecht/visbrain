@@ -64,7 +64,7 @@ class UiDetection(object):
         idx = int(self._ToolDetectType.currentIndex())
         method = str(self._ToolDetectType.currentText())
         self._stacked_detections.setCurrentIndex(idx)
-        enable = USER_METHOD[method] not in self._custom_detections.keys()
+        enable = not self._model.has_custom_detection(USER_METHOD[method])
         self._stacked_detections.setEnabled(enable)
 
     # =====================================================================
@@ -98,9 +98,9 @@ class UiDetection(object):
             Method to use.
         """
         user_method = USER_METHOD[method]
-        if user_method in self._custom_detections.keys():
+        if self._model.has_custom_detection(user_method):
             logger.warning("Custom method used for %s detection" % method)
-            fcn = self._custom_detections[user_method]
+            fcn = self._model.get_detection(user_method)
         else:
             logger.info("Default method used for %s detection" % method)
             # Switch between detection types :

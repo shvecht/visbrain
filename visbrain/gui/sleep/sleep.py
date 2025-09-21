@@ -6,17 +6,16 @@ import numpy as np
 import vispy.scene.cameras as viscam
 
 from .interface import UiInit, UiElements
+from .model import SleepDataset
 from .visuals import Visuals
 from visbrain._pyqt_module import _PyQtModule
 from visbrain.utils import (FixedCam, color2vb, MouseEventControl)
-from visbrain.io import ReadSleepData
 from visbrain.config import PROFILER
 
 logger = logging.getLogger('visbrain')
 
 
-class Sleep(_PyQtModule, ReadSleepData, UiInit, Visuals, UiElements,
-            MouseEventControl):
+class Sleep(_PyQtModule, UiInit, Visuals, UiElements, MouseEventControl):
     """Visualize and edit sleep data.
 
     Use this module to :
@@ -81,7 +80,8 @@ class Sleep(_PyQtModule, ReadSleepData, UiInit, Visuals, UiElements,
     def __init__(self, data=None, hypno=None, config_file=None,
                  annotations=None, channels=None, sf=None, downsample=100.,
                  axis=True, href=['art', 'wake', 'rem', 'n1', 'n2', 'n3'],
-                 preload=True, use_mne=False, kwargs_mne={}, verbose=None):
+                 preload=True, use_mne=False, kwargs_mne={}, verbose=None,
+                 model=None):
         """Init."""
         _PyQtModule.__init__(self, verbose=verbose, icon='sleep_icon.svg')
         # ====================== APP CREATION ======================
@@ -95,15 +95,18 @@ class Sleep(_PyQtModule, ReadSleepData, UiInit, Visuals, UiElements,
 
         # ====================== LOAD FILE ======================
         PROFILER("Import file", as_type='title')
-        ReadSleepData.__init__(self, data, channels, sf, hypno, href, preload,
-                               use_mne, downsample, kwargs_mne,
-                               annotations)
+        if model is None:
+            model = SleepDataset(data, channels, sf, hypno, href, preload,
+                                 use_mne, downsample, kwargs_mne,
+                                 annotations)
+        elif not isinstance(model, SleepDataset):
+            raise TypeError("model must be an instance of SleepDataset")
+        self._model = model
 
         # ====================== VARIABLES ======================
         # Check all data :
         self._config_file = config_file
         self._annot_mark = np.array([])
-        self._hconvinv = {v: k for k, v in self._hconv.items()}
         self._ax = axis
         # ---------- Default line width ----------
         self._lw = 1.
@@ -117,10 +120,11 @@ class Sleep(_PyQtModule, ReadSleepData, UiInit, Visuals, UiElements,
         self._hypcolor = {-1: '#8bbf56', 0: '#56bf8b', 1: '#aabcce',
                           2: '#405c79', 3: '#0b1c2c', 4: '#bf5656'}
         # Convert color :
-        if self._hconv != self._hconvinv:
+        hconvinv = self._model.hconvinv
+        if self._model.hconv != hconvinv:
             hypc = self._hypcolor.copy()
-            for k in self._hconv.keys():
-                self._hypcolor[k] = hypc[self._hconvinv[k]]
+            for k in self._model.hconv.keys():
+                self._hypcolor[k] = hypc[hconvinv[k]]
         self._indicol = '#e74c3c'
         # Default spectrogram colormap :
         self._defcmap = 'viridis'
@@ -139,7 +143,6 @@ class Sleep(_PyQtModule, ReadSleepData, UiInit, Visuals, UiElements,
         self._mtsym = 'star'
         self._peaksym = 'disc'
         # ---------- Custom detections ----------
-        self._custom_detections = {}
         # Get some data info (min / max / std / mean)
         self._get_data_info()
         PROFILER("Data info")
@@ -162,11 +165,11 @@ class Sleep(_PyQtModule, ReadSleepData, UiInit, Visuals, UiElements,
 
     def __len__(self):
         """Return the number of channels."""
-        return len(self._channels)
+        return len(self._model)
 
     def __getitem__(self, key):
         """Return corresponding data info."""
-        return self._datainfo[key]
+        return self._model[key]
 
     def replace_detections(self, dtype, method):
         """Replace the default detection methods.
@@ -212,9 +215,7 @@ class Sleep(_PyQtModule, ReadSleepData, UiInit, Visuals, UiElements,
                              "%s" % ', '.join(meth_names))
         assert hasattr(method, '__call__')
         # Save the method :
-        self._custom_detections[dtype] = method
-        logger.info("Method for %s detection has been successfully "
-                    "replaced" % dtype)
+        self._model.replace_detection(dtype, method)
         # Set stack detections enable / disable :
         self._fcn_switch_detection()
 
@@ -223,9 +224,122 @@ class Sleep(_PyQtModule, ReadSleepData, UiInit, Visuals, UiElements,
     ###########################################################################
     def _get_data_info(self):
         """Get some info about data (min, max, std, mean, dist)."""
-        self._datainfo = {'min': self._data.min(1), 'max': self._data.max(1),
-                          'std': self._data.std(1), 'mean': self._data.mean(1),
-                          'dist': self._data.max(1) - self._data.min(1)}
+        return self._model.refresh_data_info()
+
+    # ------------------------------------------------------------------
+    # Data accessors proxying to the model layer
+    # ------------------------------------------------------------------
+    @property
+    def _data(self):
+        return self._model.data
+
+    @_data.setter
+    def _data(self, value):
+        self._model.data = value
+
+    @property
+    def _hypno(self):
+        return self._model.hypno
+
+    @_hypno.setter
+    def _hypno(self, value):
+        self._model.hypno = value
+
+    @property
+    def _time(self):
+        return self._model.time
+
+    @_time.setter
+    def _time(self, value):
+        self._model.time = value
+
+    @property
+    def _channels(self):
+        return self._model.channels
+
+    @_channels.setter
+    def _channels(self, value):
+        self._model.channels = value
+
+    @property
+    def _href(self):
+        return self._model.href
+
+    @_href.setter
+    def _href(self, value):
+        self._model.href = value
+
+    @property
+    def _hconv(self):
+        return self._model.hconv
+
+    @_hconv.setter
+    def _hconv(self, value):
+        self._model.hconv = value
+
+    @property
+    def _hconvinv(self):
+        return self._model.hconvinv
+
+    @property
+    def _sf(self):
+        return self._model.sf
+
+    @_sf.setter
+    def _sf(self, value):
+        self._model.sf = value
+
+    @property
+    def _sfori(self):
+        return self._model.sfori
+
+    @_sfori.setter
+    def _sfori(self, value):
+        self._model.sfori = value
+
+    @property
+    def _dsf(self):
+        return self._model.dsf
+
+    @_dsf.setter
+    def _dsf(self, value):
+        self._model.dsf = value
+
+    @property
+    def _N(self):
+        return self._model.n_points
+
+    @_N.setter
+    def _N(self, value):
+        self._model.n_points = value
+
+    @property
+    def _file(self):
+        return self._model.file
+
+    @_file.setter
+    def _file(self, value):
+        self._model.file = value
+
+    @property
+    def _annot_file(self):
+        return self._model.annotations
+
+    @_annot_file.setter
+    def _annot_file(self, value):
+        self._model.annotations = value
+
+    @property
+    def _datainfo(self):
+        return self._model.datainfo
+
+    @_datainfo.setter
+    def _datainfo(self, value):
+        self._model.datainfo = value
+
+    @property
+    def _custom_detections(self):
+        return self._model.custom_detections
 
     def _set_default_state(self):
         """Set the default window state."""
