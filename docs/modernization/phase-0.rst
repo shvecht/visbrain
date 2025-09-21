@@ -50,6 +50,14 @@ The dev requirements extend the runtime pins with tooling for linting, testing,
 and packaging. Contributors can rely on this environment while modernizing the
 code base and standing up new CI jobs.
 
+For contributors who prefer containerized tooling, the repository also ships a
+``.devcontainer`` configuration compatible with VS Code and other editors that
+understand the Dev Containers specification. Reopening the workspace in that
+container builds on the Python 3.11 baseline image and automatically runs
+``pip install -r requirements/dev.txt`` so the Phase 0 toolchain is ready
+without additional manual setup. Forwarded ports cover common notebook and app
+servers used when iterating on visualization examples.
+
 Next steps
 ----------
 

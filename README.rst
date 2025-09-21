@@ -37,14 +37,24 @@ used by contributors while the code base is updated. The detailed plan lives in
 ``docs/modernization/phase-0.rst`` within the repository.
 
 For day-to-day development work on this modernization track we recommend
+either opening the repository in the provided development container or
 creating a virtual environment that matches the Phase 0 baseline:
 
-.. code-block:: console
+* **Dev Container** — Open the folder in VS Code (or another
+  devcontainer-aware editor) and reopen in the container. The image installs
+  the Phase 0 toolchain automatically by running ``pip install -r
+  requirements/dev.txt`` after the first build and forwards common notebook
+  and application ports.
 
-   python -m venv .venv
-   source .venv/bin/activate  # On Windows use .venv\\Scripts\\activate
-   python -m pip install --upgrade pip
-   pip install -r requirements/dev.txt
+* **Local virtual environment** — Create a virtual environment and install the
+  pinned dependencies manually:
+
+  .. code-block:: console
+
+     python -m venv .venv
+     source .venv/bin/activate  # On Windows use .venv\\Scripts\\activate
+     python -m pip install --upgrade pip
+     pip install -r requirements/dev.txt
 
 These pins align with Python 3.9–3.12 on Windows, macOS, and Linux and will be
 revisited during the packaging overhaul in Phase 1.
