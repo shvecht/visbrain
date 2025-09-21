@@ -1,0 +1,30 @@
+{
+    "name": "Visbrain Phase 0",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.formatting.provider": "black",
+                "python.linting.flake8Enabled": true,
+                "editor.formatOnSave": true,
+                "terminal.integrated.defaultProfile.linux": "bash"
+            },
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-toolsai.jupyter",
+                "ms-azuretools.vscode-docker",
+                "eamodio.gitlens"
+            ]
+        }
+    },
+    "forwardPorts": [
+        8050,
+        8888
+    ],
+    "postCreateCommand": "pip install -r requirements/dev.txt",
+    "remoteUser": "vscode"
+}
