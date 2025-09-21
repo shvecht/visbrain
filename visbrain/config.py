@@ -6,7 +6,7 @@ import logging
 import os
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Iterator, Mapping, MutableMapping, Optional, Sequence
+from typing import Any, Callable, Iterator, Mapping, MutableMapping, Optional, Sequence
 
 from vispy import app as visapp
 
@@ -384,6 +384,7 @@ def vispy_app(
     create: bool = True,
     force: bool = False,
     reset: bool = False,
+    run: bool | Callable[..., Any] | None = None,
 ) -> Iterator[Optional[visapp.Application]]:
     """Context manager yielding the active VisPy application instance."""
 
@@ -400,6 +401,16 @@ def vispy_app(
     _VISPY_CONTEXT_STATE.push(owned, reset)
     try:
         yield app
+        if app is not None and run:
+            if callable(run):
+                try:
+                    run(app)
+                except TypeError:
+                    run()
+            else:
+                runner = getattr(app, "run", None)
+                if callable(runner):
+                    runner()
     finally:
         owned_state, reset_state = _VISPY_CONTEXT_STATE.pop()
         _VISPY_CONTEXT_STATE.propagate_reset(reset_state)

@@ -2,13 +2,15 @@
 from __future__ import annotations
 
 import logging
-from importlib import resources
+from collections.abc import Callable, Iterable
+from typing import Any, List, Sequence, Tuple
 
 from .qt import QtGui, guard_qapp_lifecycle
 
 from .utils import set_widget_size, set_log_level
 from .config import PROFILER, get_config, qt_app, vispy_app
 from .io import path_to_tmp, clean_tmp, path_to_visbrain_data
+from .resources import load_icon
 
 logger = logging.getLogger('visbrain')
 
@@ -40,9 +42,8 @@ class _PyQtModule(object):
             import faulthandler
             faulthandler.enable()
             logger.debug("Faulthandler enabled")
-        self._need_description = to_describe
-        if isinstance(self._need_description, str):
-            self._need_description = [self._need_description]
+        self._description_hooks: List[Tuple[str, Callable[[], str]]] = []
+        self._register_description_hooks(to_describe)
         self._module_icon = icon
         self._show_settings = show_settings
 
@@ -85,28 +86,29 @@ class _PyQtModule(object):
                 self.QuickSettings.setCurrentIndex(0)
             # Set icon (if possible) :
             if isinstance(self._module_icon, str):
-                try:
-                    icon_resource = resources.files("visbrain.resources.icons")
-                except ModuleNotFoundError:  # pragma: no cover - packaging error
-                    logger.debug("Icon package missing for %s", self._module_icon)
-                else:
-                    icon_path = icon_resource.joinpath(self._module_icon)
-                    if icon_path.is_file():
-                        try:
-                            with resources.as_file(icon_path) as icon_file:
-                                app_icon = QtGui.QIcon()
-                                app_icon.addFile(str(icon_file))
-                                self.setWindowIcon(app_icon)
-                        except FileNotFoundError:  # pragma: no cover - zip importer
-                            logger.debug("No icon found (%s)" % self._module_icon)
-                    else:  # don't crash just for an icon...
-                        logger.debug("No icon found (%s)" % self._module_icon)
+                app_icon = load_icon(self._module_icon)
+                if app_icon is not None:
+                    self.setWindowIcon(app_icon)
+                else:  # don't crash just for an icon...
+                    logger.debug("No icon found (%s)" % self._module_icon)
+            elif isinstance(self._module_icon, QtGui.QIcon):
+                self.setWindowIcon(self._module_icon)
+            elif self._module_icon is not None:
+                logger.debug("Unsupported icon type: %r", self._module_icon)
             else:
                 logger.debug("No icon passed as an input.")
             # Tree description if log level is on debug :
-            if isinstance(self._need_description, list):
-                for k in self._need_description:
-                    self._pyqt_title('Tree', eval('self.%s.describe_tree()' % k))
+            if self._description_hooks:
+                for label, callback in self._description_hooks:
+                    try:
+                        description = callback()
+                    except Exception:
+                        logger.exception(
+                            "Failed to describe tree for %s", label
+                        )
+                        raise
+                    else:
+                        self._pyqt_title('Tree', description)
             # Show and maximized the window :
             if PROFILER and logger.level == 1:
                 self._pyqt_title('Profiler', '')
@@ -115,9 +117,8 @@ class _PyQtModule(object):
             cfg = get_config()
             if cfg.show_pyqt_app:
                 self.showMaximized()
-                with vispy_app() as active_vispy:
-                    if active_vispy is not None:
-                        active_vispy.run()
+                with vispy_app(run=cfg.show_gui):
+                    pass
         # Finally clean the tmp folder :
         self._clean_tmp_folder()
 
@@ -128,3 +129,65 @@ class _PyQtModule(object):
         if app is not None:
             app.quit()
         logger.debug("App closed.")
+
+    # ------------------------------------------------------------------
+    # Description helpers
+    # ------------------------------------------------------------------
+    def _register_description_hooks(self, specs: Any) -> None:
+        for label, callback in self._iter_description_specs(specs):
+            self._description_hooks.append((label, callback))
+
+    def add_description_hook(
+        self, callback: Callable[[], str], *, label: str | None = None
+    ) -> None:
+        """Register an explicit *callback* returning a tree description."""
+
+        hook_label = label or getattr(callback, "__name__", repr(callback))
+        self._description_hooks.append((hook_label, callback))
+
+    # -- internal utilities -------------------------------------------------
+    def _iter_description_specs(
+        self, specs: Any
+    ) -> Iterable[Tuple[str, Callable[[], str]]]:
+        if specs is None:
+            return
+        if isinstance(specs, (list, tuple, set)):
+            for item in specs:
+                yield from self._iter_description_specs(item)
+            return
+        if isinstance(specs, str):
+            yield (specs, self._make_describe_tree_callback(specs))
+            return
+        describe = getattr(specs, "describe_tree", None)
+        if callable(describe):
+            label = getattr(specs, "__class__", type(specs)).__name__
+            yield (label, describe)
+            return
+        if callable(specs):
+            label = getattr(specs, "__name__", repr(specs))
+            yield (label, specs)
+            return
+        raise TypeError(f"Unsupported description hook specification: {specs!r}")
+
+    def _make_describe_tree_callback(
+        self, dotted_path: str
+    ) -> Callable[[], str]:
+        parts: Sequence[str] = tuple(filter(None, dotted_path.split('.')))
+
+        def _describe() -> str:
+            target: Any = self
+            for part in parts:
+                try:
+                    target = getattr(target, part)
+                except AttributeError as exc:
+                    raise AttributeError(
+                        f"Attribute path {dotted_path!r} missing {part!r}"
+                    ) from exc
+            describe = getattr(target, "describe_tree", None)
+            if not callable(describe):
+                raise AttributeError(
+                    f"Resolved object for {dotted_path!r} has no describe_tree"
+                )
+            return describe()
+
+        return _describe
