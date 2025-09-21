@@ -4322,18 +4322,25 @@ display</string>
              <property name="bottomMargin">
               <number>0</number>
              </property>
-             <item>
-              <layout class="QGridLayout" name="gridLayout_7">
+            <item>
+             <widget class="QWidget" name="_sliderPanel">
+              <layout class="QVBoxLayout" name="_sliderPanelLayout">
+               <property name="spacing">
+                <number>6</number>
+               </property>
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
                <property name="topMargin">
                 <number>0</number>
                </property>
-               <property name="horizontalSpacing">
-                <number>7</number>
+               <property name="rightMargin">
+                <number>0</number>
                </property>
-               <property name="verticalSpacing">
-                <number>2</number>
+               <property name="bottomMargin">
+                <number>0</number>
                </property>
-               <item row="0" column="0" colspan="18">
+               <item>
                 <layout class="QHBoxLayout" name="horizontalLayout_22">
                  <property name="topMargin">
                   <number>3</number>
@@ -4415,7 +4422,7 @@ display</string>
                  </item>
                 </layout>
                </item>
-               <item row="1" column="0" colspan="18">
+               <item>
                 <widget class="QSlider" name="_SlVal">
                  <property name="orientation">
                   <enum>Qt::Horizontal</enum>
@@ -4428,215 +4435,276 @@ display</string>
                  </property>
                 </widget>
                </item>
-               <item row="2" column="0">
-                <widget class="QLabel" name="label">
-                 <property name="text">
-                  <string>Go to</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="1">
-                <widget class="QDoubleSpinBox" name="_SlGoto">
-                 <property name="decimals">
-                  <number>1</number>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="2">
-                <widget class="QLabel" name="label_12">
-                 <property name="text">
-                  <string>sec</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="3">
-                <spacer name="horizontalSpacer_4">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeType">
-                  <enum>QSizePolicy::Maximum</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-               <item row="2" column="4">
-                <widget class="QLabel" name="label_3">
-                 <property name="text">
-                  <string>Window</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="5">
-                <widget class="QDoubleSpinBox" name="_SigWin">
-                 <property name="decimals">
-                  <number>1</number>
-                 </property>
-                 <property name="maximum">
-                  <double>1000.000000000000000</double>
-                 </property>
-                 <property name="value">
-                  <double>30.000000000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="6">
-                <widget class="QLabel" name="label_4">
-                 <property name="text">
-                  <string>sec</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="7">
-                <spacer name="horizontalSpacer_5">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeType">
-                  <enum>QSizePolicy::Expanding</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-               <item row="2" column="8">
-                <widget class="QLabel" name="label_3_1">
-                 <property name="text">
-                  <string>Scoring Window</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="9">
-                <widget class="QDoubleSpinBox" name="_ScorWin">
-                 <property name="decimals">
-                  <number>1</number>
-                 </property>
-                 <property name="minimum">
-                  <double>0.100000000000000</double>
-                 </property>
-                 <property name="maximum">
-                  <double>1000.000000000000000</double>
-                 </property>
-                 <property name="value">
-                  <double>30.000000000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="10">
-                <widget class="QLabel" name="label_4_1">
-                 <property name="text">
-                  <string>sec</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="11">
-                <spacer name="horizontalSpacer_5_1">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeType">
-                  <enum>QSizePolicy::Expanding</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-               <item row="2" column="12">
-                <widget class="QLabel" name="label_5">
-                 <property name="text">
-                  <string>Slider step</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="13">
-                <widget class="QDoubleSpinBox" name="_SigSlStep">
-                 <property name="decimals">
-                  <number>1</number>
-                 </property>
-                 <property name="minimum">
-                  <double>0.100000000000000</double>
-                 </property>
-                 <property name="value">
-                  <double>30.000000000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="14">
-                <widget class="QLabel" name="label_6">
-                 <property name="text">
-                  <string>sec</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="15">
-                <spacer name="horizontalSpacer_6">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-               <item row="2" column="16">
-                <widget class="QLabel" name="label_31">
-                 <property name="text">
-                  <string>Rule</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="17">
-                <widget class="QComboBox" name="_slRules">
-                 <property name="currentIndex">
-                  <number>1</number>
-                 </property>
-                 <item>
-                  <property name="text">
-                   <string>seconds</string>
+               <item>
+                <widget class="QWidget" name="_sliderControls" native="false">
+                 <layout class="QGridLayout" name="_sliderControlsLayout">
+                  <property name="columnStretch">
+                   <string>0,0,0,0,0,1</string>
                   </property>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>minutes</string>
+                  <property name="horizontalSpacing">
+                   <number>12</number>
                   </property>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>hours</string>
+                  <property name="verticalSpacing">
+                   <number>4</number>
                   </property>
-                 </item>
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item row="0" column="0">
+                   <layout class="QHBoxLayout" name="_sliderGotoLayout">
+                    <property name="spacing">
+                     <number>6</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="label">
+                      <property name="text">
+                       <string>Go to</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QDoubleSpinBox" name="_SlGoto">
+                      <property name="decimals">
+                       <number>1</number>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="label_12">
+                      <property name="text">
+                       <string>sec</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item row="0" column="1">
+                   <layout class="QHBoxLayout" name="_sliderWindowLayout">
+                    <property name="spacing">
+                     <number>6</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="label_3">
+                      <property name="text">
+                       <string>Window</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QDoubleSpinBox" name="_SigWin">
+                      <property name="decimals">
+                       <number>1</number>
+                      </property>
+                      <property name="maximum">
+                       <double>1000.000000000000000</double>
+                      </property>
+                      <property name="value">
+                       <double>30.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="label_4">
+                      <property name="text">
+                       <string>sec</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item row="0" column="2">
+                   <layout class="QHBoxLayout" name="_sliderScoringWindowLayout">
+                    <property name="spacing">
+                     <number>6</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="label_3_1">
+                      <property name="text">
+                       <string>Scoring Window</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QDoubleSpinBox" name="_ScorWin">
+                      <property name="decimals">
+                       <number>1</number>
+                      </property>
+                      <property name="minimum">
+                       <double>0.100000000000000</double>
+                      </property>
+                      <property name="maximum">
+                       <double>1000.000000000000000</double>
+                      </property>
+                      <property name="value">
+                       <double>30.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="label_4_1">
+                      <property name="text">
+                       <string>sec</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item row="0" column="3">
+                   <layout class="QHBoxLayout" name="_sliderStepLayout">
+                    <property name="spacing">
+                     <number>6</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="label_5">
+                      <property name="text">
+                       <string>Slider step</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QDoubleSpinBox" name="_SigSlStep">
+                      <property name="decimals">
+                       <number>1</number>
+                      </property>
+                      <property name="minimum">
+                       <double>0.100000000000000</double>
+                      </property>
+                      <property name="value">
+                       <double>30.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="label_6">
+                      <property name="text">
+                       <string>sec</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item row="0" column="4">
+                   <layout class="QHBoxLayout" name="_sliderRuleLayout">
+                    <property name="spacing">
+                     <number>6</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="label_31">
+                      <property name="text">
+                       <string>Rule</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QComboBox" name="_slRules">
+                      <property name="currentIndex">
+                       <number>1</number>
+                      </property>
+                      <item>
+                       <property name="text">
+                        <string>seconds</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>minutes</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>hours</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                  <item row="0" column="5">
+                   <spacer name="horizontalSpacer_3">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
                 </widget>
                </item>
-               <item row="2" column="18">
-                <spacer name="horizontalSpacer_3">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-               <item row="3" column="0" colspan="18">
+               <item>
                 <layout class="QHBoxLayout" name="horizontalLayout_22_1">
                  <property name="bottomMargin">
                   <number>3</number>
@@ -4688,7 +4756,8 @@ display</string>
                 </layout>
                </item>
               </layout>
-             </item>
+             </widget>
+            </item>
             </layout>
            </widget>
           </item>
