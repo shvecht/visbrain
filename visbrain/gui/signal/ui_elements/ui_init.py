@@ -2,13 +2,14 @@
 import numpy as np
 from warnings import warn
 
-from visbrain.qt import QtWidgets
+from visbrain.qt import QtCore, QtWidgets
 
 import vispy.scene.cameras as viscam
 from vispy import app
 
 from ..interface.gui import Ui_MainWindow
 from visbrain.objects import VisbrainCanvas
+from visbrain.gui._accessibility import annotate_widget_accessibility
 
 
 class GridShortcuts(object):
@@ -135,6 +136,22 @@ class UiInit(QtWidgets.QMainWindow, Ui_MainWindow, app.Canvas):
         # Create the main window :
         super(UiInit, self).__init__(None)
         self.setupUi(self)
+        self.setAccessibleName("Signal window")
+        self.setAccessibleDescription(
+            "Time-series exploration interface with keyboard navigable controls."
+        )
+        annotate_widget_accessibility(
+            self,
+            extra={
+                "_sig_title": (
+                    "Signal title",
+                    (
+                        "Text field defining the title displayed above the active "
+                        "signal view."
+                    ),
+                ),
+            },
+        )
 
         # Cameras :
         grid_rect = (0, 0, 1, 1)
@@ -156,6 +173,27 @@ class UiInit(QtWidgets.QMainWindow, Ui_MainWindow, app.Canvas):
         # Add canvas to layout :
         self._GridLayout.addWidget(self._grid_canvas.canvas.native)
         self._SignalLayout.addWidget(self._signal_canvas.canvas.native)
+        for widget, name, description in (
+            (
+                self._grid_canvas.canvas.native,
+                "Signal grid canvas",
+                (
+                    "Displays multiple channels in a grid layout for overview "
+                    "exploration."
+                ),
+            ),
+            (
+                self._signal_canvas.canvas.native,
+                "Signal detail canvas",
+                (
+                    "Single-channel visualization used for detailed inspection "
+                    "and annotation."
+                ),
+            ),
+        ):
+            widget.setFocusPolicy(QtCore.Qt.StrongFocus)
+            widget.setAccessibleName(name)
+            widget.setAccessibleDescription(description)
 
         # Initialize shortcuts :
         GridShortcuts.__init__(self, self._grid_canvas.canvas)

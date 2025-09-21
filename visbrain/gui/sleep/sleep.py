@@ -6,6 +6,7 @@ from typing import Optional
 
 from visbrain._pyqt_module import _PyQtModule
 from visbrain.config import PROFILER
+from visbrain.gui._accessibility import install_action_shortcuts
 
 from .controller import SleepController
 from .model import SleepDataset
@@ -75,6 +76,7 @@ class Sleep(_PyQtModule):
             config_file=config_file,
         )
         self._apply_theme()
+        install_action_shortcuts(self._view)
 
     # ------------------------------------------------------------------
     # Composition accessors

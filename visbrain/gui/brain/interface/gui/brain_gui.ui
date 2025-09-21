@@ -62,6 +62,9 @@ QLabel { font-size: 10pt; }</string>
         </property>
         <item>
          <widget class="QTabWidget" name="QuickSettings">
+          <property name="focusPolicy">
+           <enum>Qt::StrongFocus</enum>
+          </property>
           <property name="styleSheet">
            <string>QTabWidget::pane { border: 0; }
 QTabBar::tab { padding: 6px 12px; font-size: 10pt; }
@@ -1547,6 +1550,9 @@ name</string>
                <layout class="QVBoxLayout" name="verticalLayout_9">
                 <item>
                  <widget class="QTabWidget" name="_source_tab">
+                  <property name="focusPolicy">
+                   <enum>Qt::StrongFocus</enum>
+                  </property>
                   <property name="currentIndex">
                    <number>2</number>
                   </property>
@@ -3881,6 +3887,9 @@ type</string>
         </item>
         <item>
          <widget class="QProgressBar" name="progressBar">
+          <property name="focusPolicy">
+           <enum>Qt::TabFocus</enum>
+          </property>
           <property name="value">
            <number>0</number>
           </property>
@@ -3894,6 +3903,9 @@ type</string>
          <horstretch>1</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="focusPolicy">
+        <enum>Qt::StrongFocus</enum>
        </property>
        <property name="currentIndex">
         <number>0</number>
@@ -4457,6 +4469,9 @@ type</string>
  </widget>
  <tabstops>
   <tabstop>QuickSettings</tabstop>
+  <tabstop>_obj_type_lst</tabstop>
+  <tabstop>_source_tab</tabstop>
+  <tabstop>progressBar</tabstop>
  </tabstops>
  <resources />
  <connections />

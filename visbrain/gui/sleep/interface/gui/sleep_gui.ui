@@ -87,6 +87,9 @@
         </property>
         <item>
          <widget class="QTabWidget" name="QuickSettings">
+          <property name="focusPolicy">
+           <enum>Qt::StrongFocus</enum>
+          </property>
           <property name="maximumSize">
            <size>
             <width>16777215</width>
@@ -193,6 +196,9 @@ type</string>
             </item>
             <item>
              <widget class="QStackedWidget" name="_stacked_panels">
+              <property name="focusPolicy">
+               <enum>Qt::StrongFocus</enum>
+              </property>
               <property name="frameShape">
                <enum>QFrame::NoFrame</enum>
               </property>
@@ -1769,6 +1775,9 @@ type</string>
             </item>
             <item>
              <widget class="QStackedWidget" name="_stacked_tools">
+              <property name="focusPolicy">
+               <enum>Qt::StrongFocus</enum>
+              </property>
               <property name="currentIndex">
                <number>1</number>
               </property>
@@ -2977,6 +2986,9 @@ on</string>
                    </item>
                    <item>
                     <widget class="QStackedWidget" name="_stacked_detections">
+                     <property name="focusPolicy">
+                      <enum>Qt::StrongFocus</enum>
+                     </property>
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
                        <horstretch>0</horstretch>
@@ -5277,15 +5289,21 @@ display</string>
     <string>Annotations</string>
    </property>
   </action>
-  <action name="menuSaveScreenshot">
-   <property name="text">
-    <string>Screenshot</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+N</string>
-   </property>
-  </action>
- </widget>
+ <action name="menuSaveScreenshot">
+  <property name="text">
+   <string>Screenshot</string>
+  </property>
+  <property name="shortcut">
+   <string>Ctrl+N</string>
+  </property>
+ </action>
+</widget>
+ <tabstops>
+  <tabstop>QuickSettings</tabstop>
+  <tabstop>_stacked_panels</tabstop>
+  <tabstop>_stacked_tools</tabstop>
+  <tabstop>_stacked_detections</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

@@ -70,6 +70,11 @@ class UiPanels(object):
         self._SpecW, self._SpecLayout = self._create_compatible_w("SpecW",
                                                                   "SpecL")
         self._SpecLayout.addWidget(self._specCanvas.canvas.native)
+        self._specCanvas.canvas.native.setFocusPolicy(QtCore.Qt.StrongFocus)
+        self._specCanvas.canvas.native.setAccessibleName("Spectrogram canvas")
+        self._specCanvas.canvas.native.setAccessibleDescription(
+            "Displays the spectrogram for the selected channel."
+        )
         self._chanGrid.addWidget(self._SpecW, len(self) + 1, 1, 1, 1)
         # Add label :
         self._specLabel = QtWidgets.QLabel(self.centralwidget)
@@ -107,6 +112,11 @@ class UiPanels(object):
                                      fcn=[self.on_mouse_wheel], use_pad=True)
         self._HypW, self._HypLayout = self._create_compatible_w("HypW", "HypL")
         self._HypLayout.addWidget(self._hypCanvas.canvas.native)
+        self._hypCanvas.canvas.native.setFocusPolicy(QtCore.Qt.StrongFocus)
+        self._hypCanvas.canvas.native.setAccessibleName("Hypnogram canvas")
+        self._hypCanvas.canvas.native.setAccessibleDescription(
+            "Shows the sleep stage hypnogram with keyboard accessible controls."
+        )
         self._chanGrid.addWidget(self._HypW, len(self) + 2, 1, 1, 1)
         # Add label :
         self._hypLabel = QtWidgets.QWidget()
@@ -132,6 +142,11 @@ class UiPanels(object):
         # Main canvas for the spectrogram :
         self._topoCanvas = AxisCanvas(axis=False, name='Topoplot')
         self._topoLayout.addWidget(self._topoCanvas.canvas.native)
+        self._topoCanvas.canvas.native.setFocusPolicy(QtCore.Qt.StrongFocus)
+        self._topoCanvas.canvas.native.setAccessibleName("Topography canvas")
+        self._topoCanvas.canvas.native.setAccessibleDescription(
+            "Displays sensor topographies for the current selection."
+        )
         self._topoW.setVisible(False)
         self._PanTopoCmin.setValue(-.5)
         self._PanTopoCmax.setValue(.5)
@@ -161,6 +176,11 @@ class UiPanels(object):
         self._TimeAxisW, self._TimeLayout = self._create_compatible_w("TimeW",
                                                                       "TimeL")
         self._TimeLayout.addWidget(self._TimeAxis.canvas.native)
+        self._TimeAxis.canvas.native.setFocusPolicy(QtCore.Qt.StrongFocus)
+        self._TimeAxis.canvas.native.setAccessibleName("Time axis canvas")
+        self._TimeAxis.canvas.native.setAccessibleDescription(
+            "Timeline showing the current window and annotated events."
+        )
         self._TimeAxisW.setMaximumHeight(400)
         self._TimeAxisW.setMinimumHeight(50)
         self._chanGrid.addWidget(self._TimeAxisW, len(self) + 3, 1, 1, 1)
@@ -217,6 +237,7 @@ class UiPanels(object):
                                         QtWidgets.QSizePolicy.Minimum)
 
         # Loop over channels :
+        self._channel_shortcuts = []
         for i, k in enumerate(self._channels):
             # ============ CHECKBOX ============
             # ----- MAIN CHECKBOX -----
@@ -225,7 +246,10 @@ class UiPanels(object):
             # Name checkbox with channel name :
             self._chanChecks[i].setObjectName(_fromUtf8("_CheckChan" + k))
             self._chanChecks[i].setText(k)
-            self._chanChecks[i].setShortcut("Ctrl+" + str(i))
+            shortcut = QtGui.QShortcut(QtGui.QKeySequence(f"Ctrl+{i}"), self)
+            shortcut.setContext(QtCore.Qt.ApplicationShortcut)
+            shortcut.activated.connect(self._chanChecks[i].toggle)
+            self._channel_shortcuts.append(shortcut)
             # Add checkbox to the grid :
             self._PanChanLay.addWidget(self._chanChecks[i], i, 0, 1, 1)
             # Connect with the function :
@@ -277,7 +301,13 @@ class UiPanels(object):
                                              name='Canvas_' + k,
                                              fcn=[self.on_mouse_wheel])
             # Add the canvas to the layout :
-            self._chanLayout[i].addWidget(self._chanCanvas[i].canvas.native)
+            canvas_widget = self._chanCanvas[i].canvas.native
+            self._chanLayout[i].addWidget(canvas_widget)
+            canvas_widget.setFocusPolicy(QtCore.Qt.StrongFocus)
+            canvas_widget.setAccessibleName(f"Channel {k} canvas")
+            canvas_widget.setAccessibleDescription(
+                f"Displays the time-series waveform for channel {k}."
+            )
 
         self._PanChanLay.addItem(vspacer, i + 1, 0, 1, 1)
         self._chanGrid.addItem(hspacer, i + 4, 1, 1, 1)

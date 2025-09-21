@@ -9,6 +9,7 @@ from visbrain.utils import (safely_set_cbox, color2tuple, color2vb, mpl_cmap,
 from visbrain.io import write_fig_canvas
 from visbrain._pyqt_module import _PyQtModule
 # get_screen_size
+from visbrain.gui._accessibility import install_action_shortcuts
 
 
 __all__ = ('Signal')
@@ -239,6 +240,7 @@ class Signal(_PyQtModule, UiInit, UiElements, Visuals):
 
         # ==================== USER <-> GUI ====================
         UiElements.__init__(self, **kwargs)
+        self._qt_action_shortcuts = install_action_shortcuts(self)
 
         # Keep the canvas cameras in sync when the visibility of their
         # container widgets changes.

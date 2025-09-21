@@ -227,6 +227,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
         self.QuickSettings = QTabWidget(self.q_widget)
         self.QuickSettings.setObjectName(u"QuickSettings")
+        self.QuickSettings.setFocusPolicy(Qt.StrongFocus)
         self.QuickSettings.setMaximumSize(QSize(16777215, 16777215))
         self.QuickSettings.setAutoFillBackground(False)
         self.QuickSettings.setTabShape(QTabWidget.Rounded)
@@ -1716,6 +1717,8 @@ class Ui_MainWindow(object):
         self.statusbar = QStatusBar(MainWindow)
         self.statusbar.setObjectName(u"statusbar")
         MainWindow.setStatusBar(self.statusbar)
+        QWidget.setTabOrder(self.QuickSettings, self._sig_title)
+        QWidget.setTabOrder(self._sig_title, self._sig_form)
 
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuDisplay.menuAction())
