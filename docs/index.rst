@@ -59,6 +59,7 @@ Contents
    :maxdepth: 1
 
    documentation
+   development
    faq
    auto_examples/index.rst
    api

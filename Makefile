@@ -46,6 +46,12 @@ lint:
 
 flake: lint
 
+qt-ui:
+	@python tools/generate_qt_ui.py
+
+qt-ui-check:
+	@python tools/generate_qt_ui.py --check
+
 examples: clean
 	@for i in examples/brain/*.py examples/objects/*.py;do \
 		echo "-----------------------------------------------"; \
