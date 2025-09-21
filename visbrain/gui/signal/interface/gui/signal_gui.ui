@@ -37,7 +37,7 @@
      <number>0</number>
     </property>
     <item>
-     <widget class="QWidget" name="widget" native="true">
+     <widget class="QWidget" name="widget">
       <property name="minimumSize">
        <size>
         <width>0</width>
@@ -62,7 +62,7 @@
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
-         <widget class="QWidget" name="q_widget" native="true">
+         <widget class="QWidget" name="q_widget">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
             <horstretch>0</horstretch>
@@ -2514,7 +2514,7 @@ type</string>
               <number>0</number>
              </property>
              <item>
-              <widget class="QWidget" name="_GridWidget" native="true">
+              <widget class="QWidget" name="_GridWidget">
                <layout class="QVBoxLayout" name="verticalLayout_8">
                 <property name="spacing">
                  <number>0</number>
@@ -2546,7 +2546,7 @@ type</string>
               </widget>
              </item>
              <item>
-              <widget class="QWidget" name="_SignalWidget" native="true">
+              <widget class="QWidget" name="_SignalWidget">
                <layout class="QVBoxLayout" name="verticalLayout_7">
                 <property name="spacing">
                  <number>0</number>

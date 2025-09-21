@@ -239,6 +239,11 @@ class Signal(_PyQtModule, UiInit, UiElements, Visuals):
         # ==================== USER <-> GUI ====================
         UiElements.__init__(self, **kwargs)
 
+        # Keep the canvas cameras in sync when the visibility of their
+        # container widgets changes.
+        self.actionGrid.toggled.connect(self._sync_canvas_toggle)
+        self.actionSignal.toggled.connect(self._sync_canvas_toggle)
+
         # ==================== SHORTCUTS ====================
         self._shpopup.set_shortcuts(self._sh_grid + self._sh_sig)
 
@@ -320,6 +325,10 @@ class Signal(_PyQtModule, UiInit, UiElements, Visuals):
             self._signal_canvas.camera.rect = s_rect
             self._signal_canvas.set_default_state()
             self._signal_canvas.update()
+
+    def _sync_canvas_toggle(self, _checked):
+        """Re-apply camera defaults whenever a canvas dock is shown or hidden."""
+        self.update_cameras(update='both')
 
     def screenshot(self, filename='screenshot.png', canvas='signal',
                    autocrop=False, region=None, print_size=None,

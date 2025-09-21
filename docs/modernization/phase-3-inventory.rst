@@ -65,8 +65,8 @@ Signal module
 Legacy UI and layout sources
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* ``visbrain/gui/signal/gui/signal_gui.ui`` — Qt Designer definition compiled by
-  ``pyuic5`` 5.9 into ``signal_gui.py`` for runtime use.【F:visbrain/gui/signal/gui/signal_gui.py†L1-L120】
+* ``visbrain/gui/signal/interface/gui/signal_gui.ui`` — Qt Designer definition
+  compiled with the Qt 6 toolchain into ``signal_gui.py`` for runtime use.【F:visbrain/gui/signal/interface/gui/signal_gui.py†L1-L40】
 * ``visbrain/gui/signal/ui_elements/ui_init.py`` — instantiates the main window
   shell, allocates grid and detail ``VisbrainCanvas`` widgets, and positions
   them inside the Designer placeholders.【F:visbrain/gui/signal/ui_elements/ui_init.py†L130-L158】
@@ -101,8 +101,8 @@ Modernization flags
 * ``UiInit`` inherits the legacy ``vispy.app.Canvas`` base and should migrate to
   explicit ``SceneCanvas`` embedding under Qt 6, matching the modernization
   target shared with the other GUIs.【F:visbrain/gui/signal/ui_elements/ui_init.py†L130-L158】
-* ``signal_gui.py`` remains tied to PyQt5 and needs regeneration with PySide6 or
-  Qt 6 tooling.【F:visbrain/gui/signal/gui/signal_gui.py†L1-L120】
+* ``signal_gui.py`` now targets PySide6 and ships from the ``interface``
+  namespace, aligning the Signal module with the modernization baseline.【F:visbrain/gui/signal/interface/gui/signal_gui.py†L1-L40】
 
 Sleep module
 ------------

@@ -7,7 +7,7 @@ from visbrain.qt import QtWidgets
 import vispy.scene.cameras as viscam
 from vispy import app
 
-from ..gui import Ui_MainWindow
+from ..interface.gui import Ui_MainWindow
 from visbrain.objects import VisbrainCanvas
 
 
