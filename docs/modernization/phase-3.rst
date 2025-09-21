@@ -62,3 +62,8 @@ Rollout and testing
 * Refresh contributor guides once the regenerated stack lands, highlighting the
   PySide6 workflow, the supported Python/OS matrix and the VisPy baseline so
   developers verify patches on the official matrix before submitting changes.
+
+Supporting inventory
+--------------------
+
+* :doc:`phase-3-inventory`
