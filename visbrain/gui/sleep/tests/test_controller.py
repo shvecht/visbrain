@@ -1,4 +1,4 @@
-"""Unit tests targeting the Sleep controller without launching the façade."""
+"""Unit tests targeting the Sleep controller using synthetic fixtures."""
 
 from __future__ import annotations
 
@@ -10,59 +10,86 @@ try:  # pragma: no cover - optional Qt bindings
 except ImportError:  # pragma: no cover - Qt not installed
     QtWidgets = None
 
-from visbrain.gui.sleep.controller import SleepController
-from visbrain.gui.sleep.model import SleepDataset
-from visbrain.gui.sleep.view import SleepView
-
 
 pytestmark = [
     pytest.mark.skipif(QtWidgets is None, reason="Qt bindings are unavailable"),
 ]
 
 
-@pytest.fixture(scope="module")
-def controller_instance():
-    """Build a controller with synthetic data for signal simulation tests."""
-    rng = np.random.default_rng(0)
-    data = rng.standard_normal((2, 600)).astype(np.float32)
-    hypno = np.zeros(600, dtype=float)
-    dataset = SleepDataset(
-        data,
-        channels=["Cz", "Pz"],
-        sf=100.0,
-        hypno=hypno,
-        href=['art', 'wake', 'rem', 'n1', 'n2', 'n3'],
-        preload=True,
-        use_mne=False,
-        downsample=100.0,
-        kwargs_mne={},
-        annotations=None,
+def test_slider_signals_trigger_slots(sleep_controller, qtbot, monkeypatch):
+    """Changing the slider emits the connected slot without manual calls."""
+
+    called = []
+    original = sleep_controller._fcn_slider_settings
+
+    def tracker():
+        called.append(True)
+        return original()
+
+    monkeypatch.setattr(sleep_controller, "_fcn_slider_settings", tracker)
+    sleep_controller._SigSlStep.setValue(
+        sleep_controller._SigSlStep.value() + 1
     )
-    view = SleepView()
-    return SleepController(dataset, view)
+    qtbot.waitUntil(lambda: called, timeout=1000)
 
 
-def test_slider_simulation(controller_instance):
-    """Trigger slider related slots without GUI interaction."""
-    controller = controller_instance
-    controller._SigSlStep.setValue(2)
-    controller._SigWin.setValue(20)
-    controller._fcn_slider_settings()
-    controller._fcn_slider_move()
+def test_detection_workflow_and_persistence(sleep_controller, tmp_path):
+    """Custom detections populate the table and can be saved/loaded."""
+
+    def fake_detection(data, sf, time, hypno):
+        return np.array([[10, 15], [20, 25]])
+
+    sleep_controller.replace_detections("spindle", fake_detection)
+    index = sleep_controller._ToolDetectType.findText("Spindles")
+    sleep_controller._ToolDetectType.setCurrentIndex(index)
+    sleep_controller._ToolDetectChan.setCurrentIndex(0)
+    sleep_controller._ToolRdSelected.setChecked(True)
+    sleep_controller._ToolDetectApply.click()
+    assert sleep_controller._DetectLocations.rowCount() == 2
+
+    file_all = tmp_path / "detections.npy"
+    sleep_controller._save_all_detect(filename=str(file_all))
+    assert file_all.exists()
+    sleep_controller._load_detect_all(filename=str(file_all))
+
+    sleep_controller._DetectLocations.selectRow(0)
+    file_select = tmp_path / "selected_detect_Cz-Spindles.csv"
+    sleep_controller._save_select_detect(filename=str(file_select))
+    assert file_select.exists()
+    sleep_controller._load_detect_select(filename=str(file_select))
 
 
-def test_detection_command(controller_instance):
-    """Simulate detection combo box changes and command execution."""
-    controller = controller_instance
-    controller._ToolDetectChan.setCurrentIndex(0)
-    controller._ToolDetectType.setCurrentIndex(0)
-    controller._fcn_apply_detection()
+def test_annotation_signals_update_table(sleep_controller, qtbot, monkeypatch):
+    """Annotation buttons drive their slots via Qt signals."""
+
+    called = []
+    original = sleep_controller._fcn_annotate_add
+
+    def tracker(*args, **kwargs):
+        called.append(True)
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(sleep_controller, "_fcn_annotate_add", tracker)
+    sleep_controller._AnnotateAdd.click()
+    qtbot.waitUntil(lambda: called, timeout=1000)
+    assert sleep_controller._AnnotateTable.rowCount() == 1
+
+    sleep_controller._AnnotateRm.click()
+    assert sleep_controller._AnnotateTable.rowCount() == 0
 
 
-def test_scoring_window_toggle(controller_instance):
-    """Toggle scoring window visibility programmatically."""
-    controller = controller_instance
-    controller._ScorWinVisible.setChecked(False)
-    controller._fcn_scorwin_indicator_toggle()
-    controller._ScorWinVisible.setChecked(True)
-    controller._fcn_scorwin_indicator_toggle()
+def test_save_and_load_helpers(sleep_controller, tmp_path):
+    """Saving hypnograms and annotations works with synthetic data."""
+
+    yes = QtWidgets.QMessageBox.Yes
+    hyp_path = tmp_path / "hyp_data.txt"
+    sleep_controller.saveHypData(filename=str(hyp_path), reply=yes)
+    assert hyp_path.exists()
+
+    anno_path = tmp_path / "annotations.csv"
+    sleep_controller._save_annotation_table(filename=str(anno_path))
+    assert anno_path.exists()
+
+    numpy_annotations = np.array([5.0, 10.0, 15.0])
+    sleep_controller._load_annotation_table(filename=numpy_annotations)
+    assert sleep_controller._AnnotateTable.rowCount() == numpy_annotations.size

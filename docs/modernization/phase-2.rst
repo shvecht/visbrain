@@ -77,3 +77,21 @@ These changes make the runtime state explicit and defer heavyweight resources
 until they are genuinely needed, unlocking deterministic behaviour across both
 interactive launches and automated tests.
 
+
+Sleep module testing strategy
+-----------------------------
+
+The Sleep GUI now exposes dedicated pytest fixtures that assemble the
+``SleepDataset`` model, ``SleepView`` widget and ``SleepController`` without
+launching the top-level façade.  The fixtures generate deterministic synthetic
+signals so detection routines, annotation helpers and save/load commands can be
+validated in isolation.  An additional ``sleep_facade`` fixture wires the full
+stack together with the shared arrays, allowing integration tests to exercise
+the MVC boundary while still running against an offscreen Qt configuration.
+
+Controller-focused tests patch Qt slots via ``monkeypatch``/``qtbot`` to assert
+that signals are connected instead of calling private helpers directly.  The
+integration suite reuses the headless façade to drive detection workflows and
+file exports without blocking on the Qt event loop, providing confidence that
+the modernization work remains compatible with automated CI environments.
+
