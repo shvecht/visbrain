@@ -68,3 +68,4 @@ Contents
    modernization/phase-0
    modernization/phase-1
    modernization/phase-2
+   modernization/phase-3
