@@ -33,18 +33,18 @@ clean-test: clean-build clean-pyc clean-ctags clean-cache
 test: test-nongui
 
 test-nongui: clean-test
-	@QT_QPA_PLATFORM=offscreen PYTHONWARNINGS=default \
-	        python -m pytest -m "not gui" --cov=visbrain --cov-report=term-missing
+	@tox -e tests
 
 test-gui:
-	@QT_QPA_PLATFORM=offscreen PYTHONWARNINGS=default \
-	        python -m pytest -m gui --cov=visbrain --cov-report=term-missing --cov-append
+	@PYTEST_MARK=gui tox -e tests -- --cov-append
 
 test-html: clean-test
 	@python -m pytest --cov=visbrain --cov-report=html --showlocals --durations=10 --html=report.html --self-contained-html
 
-flake: clean-test
-	@ruff check .
+lint:
+	@tox -e lint
+
+flake: lint
 
 examples: clean
 	@for i in examples/brain/*.py examples/objects/*.py;do \
@@ -71,7 +71,7 @@ clean_dist:
 
 # build dist
 build_dist: clean_dist
-	python -m build
+	@tox -e package
 	@echo "Dist built"
 
 # check distribution
