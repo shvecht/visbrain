@@ -12,6 +12,8 @@ except ImportError:  # pragma: no cover - Qt not installed
     QtWidgets = None
 
 from visbrain.gui import Sleep
+from visbrain.gui.sleep.controller import SleepController
+from visbrain.gui.sleep.view import SleepView
 from visbrain.io import path_to_visbrain_data
 from visbrain.tests._tests_visbrain import _TestVisbrain
 
@@ -42,6 +44,13 @@ pytestmark = [
 
 class TestSleep(_TestVisbrain):
     """Test sleep.py."""
+
+    def test_facade_components(self):
+        """Ensure façade exposes MVC components."""
+        assert isinstance(sp.controller, SleepController)
+        assert isinstance(sp.view, SleepView)
+        assert sp.model is sp.controller._model
+        assert sp.view is sp.controller._view
 
     ###########################################################################
     #                                TOOLS
