@@ -1,22 +1,226 @@
 """Configuration and runtime helpers for Visbrain."""
 from __future__ import annotations
 
+import importlib
 import getopt
 import logging
 import os
+import warnings
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from types import SimpleNamespace
 from typing import Any, Callable, Iterator, Mapping, MutableMapping, Optional, Sequence
 
-from vispy import app as visapp
+try:
+    import vispy
+except Exception as exc:  # pragma: no cover - defensive against broken installs
+    vispy = None  # type: ignore[assignment]
+    _VISPY_BASE_ERROR = exc
+else:
+    _VISPY_BASE_ERROR = None
 
-from visbrain.utils.logging import set_log_level
-from visbrain.utils.others import Profiler
+try:
+    vispy_config = vispy.config if vispy is not None else None
+except Exception as exc:  # pragma: no cover - defensive
+    vispy_config = None
+    _VISPY_CONFIG_ERROR = exc
+else:
+    _VISPY_CONFIG_ERROR = None
 
-from .qt import QT_API, QtWidgets, guard_qapp_lifecycle
+
+def _load_vispy_app() -> Any:
+    """Return the :mod:`vispy.app` module, allowing tests to monkeypatch imports."""
+
+    return importlib.import_module("vispy.app")
+
+
+try:
+    visapp = _load_vispy_app()
+except Exception as exc:  # pragma: no cover - exercised via diagnostics tests
+    _VISPY_APP_ERROR = exc
+    _VISPY_APP_ERROR_MESSAGE = (
+        "VisPy backend is unavailable: %s" % exc
+    )
+
+    def _raise_vispy_unavailable(*args: Any, **kwargs: Any) -> None:
+        raise RuntimeError(_VISPY_APP_ERROR_MESSAGE) from _VISPY_APP_ERROR
+
+    visapp = SimpleNamespace(
+        application=SimpleNamespace(Application=_raise_vispy_unavailable),
+        use_app=_raise_vispy_unavailable,
+    )
+else:
+    _VISPY_APP_ERROR = None
+
+from visbrain.utils.logging import set_log_level  # noqa: E402
+from visbrain.utils.others import Profiler  # noqa: E402
+
+from .qt import QT_API, QtWidgets, guard_qapp_lifecycle  # noqa: E402
 
 
 logger = logging.getLogger("visbrain")
+
+
+@dataclass
+class VisPyDiagnostics:
+    """Snapshot describing the current VisPy backend status."""
+
+    requested_backend: str | None = None
+    resolved_backend: str | None = None
+    available: bool = False
+    context_available: bool = False
+    gl_version: str | None = None
+    renderer: str | None = None
+    error: str | None = None
+
+    def payload(self) -> dict[str, Any]:
+        """Return diagnostic metadata suitable for structured logging."""
+
+        return {
+            "requested_backend": self.requested_backend,
+            "resolved_backend": self.resolved_backend,
+            "available": self.available,
+            "context_available": self.context_available,
+            "gl_version": self.gl_version,
+            "renderer": self.renderer,
+            "error": self.error,
+        }
+
+
+_VISPY_WARNING_MESSAGES: set[str] = set()
+_HEADLESS_BACKENDS: Sequence[str] = ("egl", "osmesa")
+
+
+def _format_exception(exc: BaseException) -> str:
+    """Return a concise textual representation of *exc*."""
+
+    return f"{exc.__class__.__name__}: {exc}" if exc else ""
+
+
+def _warn_once(message: str) -> None:
+    """Emit a warning once per unique *message*."""
+
+    if message in _VISPY_WARNING_MESSAGES:
+        return
+    _VISPY_WARNING_MESSAGES.add(message)
+    warnings.warn(message, UserWarning, stacklevel=3)
+
+
+def _log_vispy_diagnostics(diag: VisPyDiagnostics) -> None:
+    """Log diagnostics and warn the user when OpenGL is unavailable."""
+
+    payload = {k: v for k, v in diag.payload().items() if v not in (None, "")}
+    logger.info("vispy.probe %s", payload)
+    if not diag.available or not diag.context_available:
+        message = "VisPy backend unavailable or headless context missing"
+        if diag.resolved_backend:
+            message += f" (backend={diag.resolved_backend})"
+        if diag.error:
+            message += f": {diag.error}"
+        _warn_once(message)
+
+
+def _query_gl_capabilities(diag: VisPyDiagnostics) -> None:
+    """Populate OpenGL information in-place on *diag*."""
+
+    try:
+        from vispy import gloo
+    except Exception as exc:  # pragma: no cover - exercised in failure tests
+        diag.error = diag.error or _format_exception(exc)
+        diag.context_available = False
+        return
+
+    try:
+        info = gloo.gl.gl_info
+        has_context = bool(getattr(info, "have_context", False))
+        diag.gl_version = info.get_version()
+        diag.renderer = info.get_renderer()
+    except Exception as exc:  # pragma: no cover - best effort query
+        diag.error = diag.error or _format_exception(exc)
+        has_context = False
+
+    diag.context_available = diag.context_available and has_context
+
+
+def probe_vispy_environment(config: "VisbrainConfig") -> VisPyDiagnostics:
+    """Inspect the VisPy backend and OpenGL runtime status."""
+
+    diagnostics = VisPyDiagnostics(requested_backend=config.vispy_backend)
+
+    if _VISPY_APP_ERROR is not None:
+        diagnostics.error = _format_exception(_VISPY_APP_ERROR)
+        diagnostics.available = False
+        diagnostics.context_available = False
+        return diagnostics
+
+    app = config.vispy_app
+    created_app = False
+    if app is None:
+        try:
+            app = visapp.application.Application(config.vispy_backend)
+        except Exception as exc:  # pragma: no cover - guarded by tests
+            diagnostics.error = _format_exception(exc)
+            diagnostics.available = False
+            diagnostics.context_available = False
+            return diagnostics
+        else:
+            created_app = True
+
+    diagnostics.available = True
+    diagnostics.context_available = True
+    diagnostics.resolved_backend = getattr(app, "backend_name", None) or (
+        config.vispy_backend
+    )
+
+    _query_gl_capabilities(diagnostics)
+
+    if created_app:
+        # Reset temporary diagnostics application so we do not hold on to the
+        # backend longer than necessary. The caller decides when to create a
+        # long-lived VisPy application through :meth:`get_vispy_app`.
+        del app
+
+    return diagnostics
+
+
+def select_headless_backend(
+    config: "VisbrainConfig", *, candidates: Sequence[str] = _HEADLESS_BACKENDS
+) -> str | None:
+    """Attempt to select an offscreen backend in headless environments."""
+
+    if _VISPY_APP_ERROR is not None:
+        logger.debug(
+            "vispy.headless skipped due to import failure: %s",
+            _format_exception(_VISPY_APP_ERROR),
+        )
+        return None
+
+    for candidate in candidates:
+        try:
+            visapp.application.Application(candidate)
+        except Exception as exc:
+            logger.debug(
+                "vispy.headless candidate rejected",
+                exc_info=(exc.__class__, exc, exc.__traceback__),
+            )
+            continue
+        config_backend = candidate
+        if vispy_config is not None:
+            try:
+                vispy_config["default_backend"] = config_backend
+            except Exception as cfg_exc:  # pragma: no cover - defensive
+                logger.debug(
+                    "vispy.config update failed for backend %s: %s",
+                    config_backend,
+                    _format_exception(cfg_exc),
+                )
+        logger.info("vispy.headless backend=%s", config_backend)
+        return config_backend
+
+    _warn_once(
+        "No suitable headless VisPy backend (EGL/OSMesa) was found."
+    )
+    return None
 
 
 @dataclass
@@ -35,11 +239,15 @@ class VisbrainConfig:
     _vispy_app: Optional[visapp.Application] = field(
         default=None, init=False, repr=False
     )
+    vispy_diagnostics: VisPyDiagnostics = field(
+        default_factory=VisPyDiagnostics, init=False, repr=False
+    )
 
     def __post_init__(self) -> None:
         if self.vispy_backend is None and isinstance(self.qt_api, str):
             self.vispy_backend = self.qt_api.lower()
         self.apply_logging()
+        self.refresh_vispy_diagnostics(log=False)
 
     # ------------------------------------------------------------------
     # Logging helpers
@@ -60,6 +268,30 @@ class VisbrainConfig:
             self.log_search = match
         self.apply_logging()
 
+    def refresh_vispy_diagnostics(
+        self, *, log: bool = True
+    ) -> VisPyDiagnostics:
+        """Update VisPy diagnostics for the current configuration."""
+
+        diagnostics = probe_vispy_environment(self)
+        self.vispy_diagnostics = diagnostics
+        if log:
+            _log_vispy_diagnostics(diagnostics)
+        return diagnostics
+
+    def apply_headless_backend_policy(self) -> None:
+        """Attempt to select an offscreen backend when GUI display is disabled."""
+
+        if self.show_gui:
+            return
+        previous = self.vispy_backend
+        fallback = select_headless_backend(self)
+        if fallback and fallback != previous:
+            self.vispy_backend = fallback
+            if self._vispy_app is not None:
+                self._vispy_app = None
+        self.refresh_vispy_diagnostics(log=True)
+
     # ------------------------------------------------------------------
     # Copy helpers
     # ------------------------------------------------------------------
@@ -76,6 +308,9 @@ class VisbrainConfig:
         )
         duplicate._pyqt_app = self._pyqt_app
         duplicate._vispy_app = self._vispy_app
+        duplicate.vispy_diagnostics = VisPyDiagnostics(
+            **vars(self.vispy_diagnostics)
+        )
         return duplicate
 
     # ------------------------------------------------------------------
@@ -149,12 +384,43 @@ class VisbrainConfig:
                 self._vispy_app = None
 
         if self._vispy_app is not None:
+            self.refresh_vispy_diagnostics(log=False)
             return self._vispy_app
+
+        if _VISPY_APP_ERROR is not None:
+            diagnostics = VisPyDiagnostics(
+                requested_backend=self.vispy_backend,
+                available=False,
+                context_available=False,
+                error=_format_exception(_VISPY_APP_ERROR),
+            )
+            self.vispy_diagnostics = diagnostics
+            _log_vispy_diagnostics(diagnostics)
+            if force:
+                raise RuntimeError(
+                    "VisPy application backend is unavailable"
+                ) from _VISPY_APP_ERROR
+            return None
 
         if not create or (not self.show_gui and not force):
             return None
 
-        self._vispy_app = visapp.application.Application(self.vispy_backend)
+        try:
+            self._vispy_app = visapp.application.Application(self.vispy_backend)
+        except Exception as exc:
+            diagnostics = VisPyDiagnostics(
+                requested_backend=self.vispy_backend,
+                available=False,
+                context_available=False,
+                error=_format_exception(exc),
+            )
+            self.vispy_diagnostics = diagnostics
+            _log_vispy_diagnostics(diagnostics)
+            if force:
+                raise
+            return None
+
+        self.refresh_vispy_diagnostics(log=True)
         return self._vispy_app
 
     def use_app(self, backend_name):
@@ -165,6 +431,7 @@ class VisbrainConfig:
         )
         self.vispy_backend = normalized
         self._vispy_app = visapp.application.Application(normalized)
+        self.refresh_vispy_diagnostics(log=True)
         return self._vispy_app
 
 
@@ -232,6 +499,11 @@ def configure_from_environ(
             logger.error(
                 "Invalid value for %s: %s" % (_SHOW_GUI_ENVVAR, raw_show)
             )
+
+    if cfg.show_gui:
+        cfg.refresh_vispy_diagnostics(log=True)
+    else:
+        cfg.apply_headless_backend_policy()
 
     return cfg
 

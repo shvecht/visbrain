@@ -6,7 +6,14 @@ import importlib
 import logging
 import sys
 
-import vispy.app
+import pytest
+
+try:
+    import vispy.app
+except Exception as exc:  # pragma: no cover - exercised on systems without GL
+    pytest.skip(
+        f"vispy.app unavailable for testing ({exc})", allow_module_level=True
+    )
 
 from visbrain import qt as qt_mod
 
