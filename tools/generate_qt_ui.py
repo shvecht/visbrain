@@ -20,12 +20,14 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 GUI_ROOT = REPO_ROOT / "visbrain" / "gui"
 INTERFACE_TOKEN = "interface"
 VISUALS_ROOT = REPO_ROOT / "visbrain" / "visuals"
+UTILS_GUI_ROOT = REPO_ROOT / "visbrain" / "utils" / "gui"
 
 # Additional Qt Designer search roots.  Each entry provides a directory and an
 # optional predicate used to filter rglob results.
 QT_SEARCH_SCOPES: tuple[tuple[Path, Callable[[Path], bool]], ...] = (
     (GUI_ROOT, lambda path: INTERFACE_TOKEN in path.parts),
     (VISUALS_ROOT, lambda _path: True),
+    (UTILS_GUI_ROOT, lambda _path: True),
 )
 
 
@@ -103,14 +105,20 @@ def _normalize_ui_imports(content: str) -> str:
     return header + "from visbrain.qt import QtCore, QtGui, QtWidgets\n\n" + body
 
 
+NORMALIZE_IMPORT_ROOTS = (VISUALS_ROOT, UTILS_GUI_ROOT)
+
+
 def _should_normalize(ui_file: Path) -> bool:
     """Return ``True`` when *ui_file* should use :mod:`visbrain.qt` imports."""
 
-    try:
-        ui_file.relative_to(VISUALS_ROOT)
-    except ValueError:
-        return False
-    return True
+    for root in NORMALIZE_IMPORT_ROOTS:
+        try:
+            ui_file.relative_to(root)
+        except ValueError:
+            continue
+        else:
+            return True
+    return False
 
 
 def _run_generator(command: list[str]) -> str:
