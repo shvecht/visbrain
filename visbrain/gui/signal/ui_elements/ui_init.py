@@ -5,7 +5,6 @@ from warnings import warn
 from visbrain.qt import QtCore, QtWidgets
 
 import vispy.scene.cameras as viscam
-from vispy import app
 
 from ..interface.gui import Ui_MainWindow
 from visbrain.objects import VisbrainCanvas
@@ -128,7 +127,7 @@ class SignalShortcuts(object):
             self._annotate_event(str(self._signal), (t, d))
 
 
-class UiInit(QtWidgets.QMainWindow, Ui_MainWindow, app.Canvas):
+class UiInit(QtWidgets.QMainWindow, Ui_MainWindow):
     """docstring for UiInit."""
 
     def __init__(self, **kwargs):

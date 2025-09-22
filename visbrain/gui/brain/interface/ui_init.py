@@ -8,7 +8,6 @@ Grouped components :
 
 from visbrain.qt import QtCore, QtWidgets
 
-from vispy import app
 from vispy.scene.cameras import TurntableCamera
 
 from .gui import Ui_MainWindow
@@ -116,7 +115,7 @@ class BrainShortcuts(object):
                 self.userRotationPanel.setVisible(True)
 
 
-class UiInit(QtWidgets.QMainWindow, Ui_MainWindow, app.Canvas, BrainShortcuts):
+class UiInit(QtWidgets.QMainWindow, Ui_MainWindow, BrainShortcuts):
     """Group and initialize the graphical elements and interactions."""
 
     def __init__(self, bgcolor=(0.1, 0.1, 0.1)):

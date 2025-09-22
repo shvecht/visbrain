@@ -8,7 +8,7 @@ Grouped components :
 import numpy as np
 
 from visbrain.qt import QtWidgets
-from vispy import app, scene
+from vispy import scene
 import vispy.visuals.transforms as vist
 
 from ..visuals.marker import Markers
@@ -17,7 +17,7 @@ from visbrain.utils import color2vb
 from visbrain.gui._accessibility import annotate_widget_accessibility
 
 
-class UiInit(QtWidgets.QMainWindow, Ui_MainWindow, app.Canvas):
+class UiInit(QtWidgets.QMainWindow, Ui_MainWindow):
     """Group and initialize the graphical elements and interactions."""
 
     def __init__(self):
