@@ -8,16 +8,25 @@ in place or simply check whether the committed Python artifacts are stale.
 from __future__ import annotations
 
 import argparse
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Iterable
+from typing import Callable, Iterable
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 GUI_ROOT = REPO_ROOT / "visbrain" / "gui"
 INTERFACE_TOKEN = "interface"
+VISUALS_ROOT = REPO_ROOT / "visbrain" / "visuals"
+
+# Additional Qt Designer search roots.  Each entry provides a directory and an
+# optional predicate used to filter rglob results.
+QT_SEARCH_SCOPES: tuple[tuple[Path, Callable[[Path], bool]], ...] = (
+    (GUI_ROOT, lambda path: INTERFACE_TOKEN in path.parts),
+    (VISUALS_ROOT, lambda _path: True),
+)
 
 
 class GeneratorError(RuntimeError):
@@ -39,9 +48,69 @@ def _require_tool(name: str) -> str:
 def _iter_interface_files(pattern: str) -> Iterable[Path]:
     """Yield interface files matching *pattern* relative to the repo root."""
 
-    for path in sorted(GUI_ROOT.rglob(pattern)):
-        if INTERFACE_TOKEN in path.parts:
-            yield path
+    seen: set[Path] = set()
+    for root, predicate in QT_SEARCH_SCOPES:
+        for path in sorted(root.rglob(pattern)):
+            resolved = path.resolve()
+            if not predicate(resolved):
+                continue
+            if resolved in seen:
+                continue
+            seen.add(resolved)
+            yield resolved
+
+
+def _normalize_ui_imports(content: str) -> str:
+    """Replace direct PySide imports with :mod:`visbrain.qt` wrappers."""
+
+    header_marker = content.find(
+        "WARNING! All changes made in this file will be lost when recompiling UI file!"
+    )
+    if header_marker == -1:
+        raise GeneratorError("Unable to locate Qt UIC header in generated output")
+    header_end = content.find("\n\n", header_marker)
+    if header_end == -1:
+        header_end = content.find("\r\n\r\n", header_marker)
+    if header_end == -1:
+        raise GeneratorError("Unable to determine end of Qt UIC header")
+    header_end += 2
+    header = content[:header_end]
+    body = content[header_end:]
+
+    pattern = re.compile(r"from PySide6\.(Qt\w+) import \((.*?)\)\n", re.DOTALL)
+    modules: dict[str, list[str]] = {}
+
+    def _capture(match: re.Match[str]) -> str:
+        module = match.group(1)
+        names = match.group(2).replace("\n", " ").replace(",", " ").split()
+        modules[module] = [name for name in names if name]
+        return ""
+
+    body = pattern.sub(_capture, body)
+
+    supported = {"QtCore", "QtGui", "QtWidgets"}
+    if not set(modules).issubset(supported):
+        unsupported = ", ".join(sorted(set(modules) - supported))
+        raise GeneratorError(
+            "Generated UI references unsupported Qt modules: " f"{unsupported}"
+        )
+
+    for module, names in modules.items():
+        for name in sorted(set(names), key=len, reverse=True):
+            replacement = f"{module}.{name}" if name != "Qt" else f"{module}.Qt"
+            body = re.sub(rf"\b{name}\b", replacement, body)
+
+    return header + "from visbrain.qt import QtCore, QtGui, QtWidgets\n\n" + body
+
+
+def _should_normalize(ui_file: Path) -> bool:
+    """Return ``True`` when *ui_file* should use :mod:`visbrain.qt` imports."""
+
+    try:
+        ui_file.relative_to(VISUALS_ROOT)
+    except ValueError:
+        return False
+    return True
 
 
 def _run_generator(command: list[str]) -> str:
@@ -69,7 +138,10 @@ def _generate_ui(uic_exe: str, ui_file: Path) -> str:
     """Return the Python code generated from *ui_file* using PySide's UIC."""
 
     command = [uic_exe, "-g", "python", str(ui_file)]
-    return _run_generator(command)
+    content = _run_generator(command)
+    if _should_normalize(ui_file):
+        content = _normalize_ui_imports(content)
+    return content
 
 
 def _generate_qrc(rcc_exe: str, qrc_file: Path) -> str:
