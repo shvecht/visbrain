@@ -111,9 +111,9 @@ Legacy UI and layout sources
   compiled with the Qt 6.7.1 ``uic`` into the PySide6 ``sleep_gui.py`` wrapper
   consumed by the module.【F:visbrain/gui/sleep/interface/gui/sleep_gui.py†L1-L120】
 * ``visbrain/gui/sleep/interface/ui_init.py`` — initializes the ``QMainWindow``
-  shell and exposes builder helpers (``TimeAxis``, ``AxisCanvas``) that attach
-  additional VisPy canvases to the UI placeholders without inheriting from
-  ``vispy.app.Canvas``.【F:visbrain/gui/sleep/interface/ui_init.py†L19-L163】
+  shell and exposes builder helpers (``TimeAxis``, ``AxisCanvas``) that embed
+  ``SceneCanvas`` widgets by parenting their native Qt counterparts into the
+  Designer placeholders.【F:visbrain/gui/sleep/interface/ui_init.py†L19-L163】
 * ``visbrain/gui/sleep/interface/ui_elements`` — mix-in package that assembles
   the stacked panels, detection widgets, menus and screenshots tabs declared in
   the generated UI.【F:visbrain/gui/sleep/interface/ui_elements/ui_elements.py†L1-L24】
@@ -145,9 +145,11 @@ Resource loaders
 Modernization flags
 ^^^^^^^^^^^^^^^^^^^
 
-* ``UiInit`` still subclasses ``vispy.app.Canvas`` instead of embedding
-  ``SceneCanvas`` widgets through Qt-friendly wrappers, which complicates Qt 6
-  adoption.【F:visbrain/gui/sleep/interface/ui_init.py†L19-L59】
+* ``UiInit`` already subclasses ``QMainWindow`` and relies on helper classes
+  that provision ``SceneCanvas`` instances, so the legacy ``vispy.app.Canvas``
+  subclass has been retired; remaining work centers on unifying these bespoke
+  canvases with the shared ``VisbrainCanvas`` wrapper and standardizing camera
+  lifecycle management with the other modules.【F:visbrain/gui/sleep/interface/ui_init.py†L19-L163】【F:visbrain/gui/sleep/view.py†L12-L58】
 
 Figure module
 -------------
