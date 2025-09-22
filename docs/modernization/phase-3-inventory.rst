@@ -16,9 +16,9 @@ Brain module
 Legacy UI and layout sources
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* ``visbrain/gui/brain/interface/gui/brain_gui.ui`` — legacy Qt Designer export
-  consumed via the auto-generated ``brain_gui.py`` wrapper produced by
-  ``pyuic5`` 5.11.2.【F:visbrain/gui/brain/interface/gui/brain_gui.py†L1-L103】
+* ``visbrain/gui/brain/interface/gui/brain_gui.ui`` — Qt Designer export
+  compiled with the Qt 6.7.1 ``uic`` into the PySide6 ``brain_gui.py`` wrapper
+  consumed at runtime.【F:visbrain/gui/brain/interface/gui/brain_gui.py†L1-L103】
 * ``visbrain/gui/brain/interface/ui_init.py`` — creates the ``QMainWindow`` and
   embeds the VisPy canvases that fill the Designer placeholders for the brain
   and cross-section panes.【F:visbrain/gui/brain/interface/ui_init.py†L118-L140】
@@ -56,8 +56,6 @@ Modernization flags
 * ``UiInit`` still subclasses ``vispy.app.Canvas`` alongside ``QMainWindow``, a
   pattern that predates ``SceneCanvas`` embedding and should be replaced with a
   direct ``SceneCanvas`` wrapper for Qt 6 compatibility.【F:visbrain/gui/brain/interface/ui_init.py†L118-L140】
-* The generated ``brain_gui.py`` targets PyQt5 and must be regenerated with a
-  Qt 6 toolchain to match the roadmap baseline.【F:visbrain/gui/brain/interface/gui/brain_gui.py†L1-L105】
 
 Signal module
 -------------
@@ -66,7 +64,8 @@ Legacy UI and layout sources
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * ``visbrain/gui/signal/interface/gui/signal_gui.ui`` — Qt Designer definition
-  compiled with the Qt 6 toolchain into ``signal_gui.py`` for runtime use.【F:visbrain/gui/signal/interface/gui/signal_gui.py†L1-L40】
+  compiled with the Qt 6.7.1 ``uic`` into the PySide6 ``signal_gui.py`` wrapper
+  consumed at runtime.【F:visbrain/gui/signal/interface/gui/signal_gui.py†L1-L40】
 * ``visbrain/gui/signal/ui_elements/ui_init.py`` — instantiates the main window
   shell, allocates grid and detail ``VisbrainCanvas`` widgets, and positions
   them inside the Designer placeholders.【F:visbrain/gui/signal/ui_elements/ui_init.py†L130-L158】
@@ -101,8 +100,6 @@ Modernization flags
 * ``UiInit`` inherits the legacy ``vispy.app.Canvas`` base and should migrate to
   explicit ``SceneCanvas`` embedding under Qt 6, matching the modernization
   target shared with the other GUIs.【F:visbrain/gui/signal/ui_elements/ui_init.py†L130-L158】
-* ``signal_gui.py`` now targets PySide6 and ships from the ``interface``
-  namespace, aligning the Signal module with the modernization baseline.【F:visbrain/gui/signal/interface/gui/signal_gui.py†L1-L40】
 
 Sleep module
 ------------
@@ -110,8 +107,9 @@ Sleep module
 Legacy UI and layout sources
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* ``visbrain/gui/sleep/interface/gui/sleep_gui.ui`` — Designer layout compiled
-  by PyQt5 5.8.2 for widget scaffolding consumed through ``sleep_gui.py``.【F:visbrain/gui/sleep/interface/gui/sleep_gui.py†L1-L120】
+* ``visbrain/gui/sleep/interface/gui/sleep_gui.ui`` — Qt Designer layout
+  compiled with the Qt 6.7.1 ``uic`` into the PySide6 ``sleep_gui.py`` wrapper
+  consumed by the module.【F:visbrain/gui/sleep/interface/gui/sleep_gui.py†L1-L120】
 * ``visbrain/gui/sleep/interface/ui_init.py`` — initializes the ``QMainWindow``
   shell and exposes builder helpers (``TimeAxis``, ``AxisCanvas``) that attach
   additional VisPy canvases to the UI placeholders.【F:visbrain/gui/sleep/interface/ui_init.py†L19-L159】
@@ -149,8 +147,6 @@ Modernization flags
 * ``UiInit`` still subclasses ``vispy.app.Canvas`` instead of embedding
   ``SceneCanvas`` widgets through Qt-friendly wrappers, which complicates Qt 6
   adoption.【F:visbrain/gui/sleep/interface/ui_init.py†L19-L59】
-* The generated ``sleep_gui.py`` targets PyQt5 and must be regenerated under the
-  PySide6/Qt 6 toolchain noted in the roadmap.【F:visbrain/gui/sleep/interface/gui/sleep_gui.py†L1-L120】
 
 Figure module
 -------------
