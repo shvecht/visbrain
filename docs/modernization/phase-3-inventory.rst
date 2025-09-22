@@ -53,9 +53,9 @@ Resource loaders
 Modernization flags
 ^^^^^^^^^^^^^^^^^^^
 
-* ``UiInit`` still subclasses ``vispy.app.Canvas`` alongside ``QMainWindow``, a
-  pattern that predates ``SceneCanvas`` embedding and should be replaced with a
-  direct ``SceneCanvas`` wrapper for Qt 6 compatibility.【F:visbrain/gui/brain/interface/ui_init.py†L118-L140】
+* ``UiInit`` now subclasses ``QMainWindow`` directly and embeds VisPy scenes via
+  the ``VisbrainCanvas`` helper, completing the migration away from the legacy
+  ``vispy.app.Canvas`` inheritance for Qt 6 compatibility.【F:visbrain/gui/brain/interface/ui_init.py†L118-L172】
 
 Signal module
 -------------
@@ -97,9 +97,9 @@ Resource loaders
 Modernization flags
 ^^^^^^^^^^^^^^^^^^^
 
-* ``UiInit`` inherits the legacy ``vispy.app.Canvas`` base and should migrate to
-  explicit ``SceneCanvas`` embedding under Qt 6, matching the modernization
-  target shared with the other GUIs.【F:visbrain/gui/signal/ui_elements/ui_init.py†L130-L158】
+* ``UiInit`` now embeds VisPy canvases explicitly through ``VisbrainCanvas``
+  while subclassing only ``QMainWindow``, aligning with the Qt 6 modernization
+  targets shared with the other GUIs.【F:visbrain/gui/signal/ui_elements/ui_init.py†L130-L190】
 
 Sleep module
 ------------
@@ -112,7 +112,8 @@ Legacy UI and layout sources
   consumed by the module.【F:visbrain/gui/sleep/interface/gui/sleep_gui.py†L1-L120】
 * ``visbrain/gui/sleep/interface/ui_init.py`` — initializes the ``QMainWindow``
   shell and exposes builder helpers (``TimeAxis``, ``AxisCanvas``) that attach
-  additional VisPy canvases to the UI placeholders.【F:visbrain/gui/sleep/interface/ui_init.py†L19-L159】
+  additional VisPy canvases to the UI placeholders without inheriting from
+  ``vispy.app.Canvas``.【F:visbrain/gui/sleep/interface/ui_init.py†L19-L163】
 * ``visbrain/gui/sleep/interface/ui_elements`` — mix-in package that assembles
   the stacked panels, detection widgets, menus and screenshots tabs declared in
   the generated UI.【F:visbrain/gui/sleep/interface/ui_elements/ui_elements.py†L1-L24】
