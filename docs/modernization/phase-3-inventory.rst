@@ -157,9 +157,15 @@ Figure module
 Legacy UI and layout sources
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* The figure helper does not rely on Qt Designer; the entire API is implemented
-  in ``visbrain/gui/figure/figure.py`` and constructs Matplotlib figures
-  directly.【F:visbrain/gui/figure/figure.py†L1-L200】
+* ``visbrain/gui/figure/interface/figure_gui.ui`` — Qt Designer blueprint for
+  the figure builder window, defining the splitter-based layout controls,
+  preview pane and menu actions surfaced in the GUI.【F:visbrain/gui/figure/interface/figure_gui.ui†L1-L120】
+* ``visbrain/gui/figure/interface/figure_gui.py`` — Qt 6 ``uic`` export that
+  exposes the ``Ui_FigureMainWindow`` helper consumed at runtime.【F:visbrain/gui/figure/interface/figure_gui.py†L4-L110】
+* ``visbrain/gui/figure/figure.py`` — hosts the Matplotlib-backed APIs and the
+  ``FigureGUI`` shell that instantiates ``Ui_FigureMainWindow``, wires Qt
+  actions to layout slots and drives the live image preview while sharing state
+  with the :class:`Figure` helper.【F:visbrain/gui/figure/figure.py†L582-L750】
 
 VisPy entry points
 ^^^^^^^^^^^^^^^^^^
@@ -177,6 +183,6 @@ Resource loaders
 Modernization flags
 ^^^^^^^^^^^^^^^^^^^
 
-* The module depends solely on Matplotlib and NumPy, so modernization should
-  focus on harmonizing file I/O and color management with the refreshed Qt/VisPy
-  stack rather than Qt 6 migration.
+* The Qt window is now Designer-driven; remaining follow-up targets Matplotlib
+  harmonization (shared color themes, export helpers and layout serialization)
+  so the figure pipeline matches the refreshed Qt/VisPy modules.
