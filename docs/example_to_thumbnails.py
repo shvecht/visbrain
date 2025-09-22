@@ -1,11 +1,24 @@
 import os
 import logging
 import fileinput
+
 from sphinx_gallery.gen_rst import scale_image
-from sphinx_gallery import sphinx_compatibility
+
+try:
+    from sphinx_gallery import sphinx_compatibility
+except ImportError:  # sphinx-gallery 0.15 removed the helper module
+    sphinx_compatibility = None  # type: ignore[assignment]
 
 
-logger = sphinx_compatibility.getLogger('sphinx')
+if sphinx_compatibility is not None:
+    logger = sphinx_compatibility.getLogger('sphinx')
+else:
+    logger = logging.getLogger('sphinx-gallery')
+    if not logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
+        logger.addHandler(handler)
+
 logger.setLevel(logging.INFO)
 logger.info("generating thumbnails using example images...")
 # logger.warning(colorize('test', 'darkred'))

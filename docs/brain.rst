@@ -128,6 +128,39 @@ Settings panel tabs
 * Connect tab (*connectivity settings*)
 * Cbar tab (*colorbar properties of the selected object*)
 
+Themes and accessibility
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :menuselection:`Display --> Theme` submenu exposes the built-in
+``Dark`` and ``Light`` palettes.  Switching themes updates the global Qt
+palette so menus, dialogs and canvases immediately pick up the new colors.
+Visbrain remembers the last selection, allowing contributors to document a
+consistent look-and-feel across sessions or revert to high-contrast defaults
+before screen captures.
+
+.. note::
+   Refresh theme previews locally with the Task 8 screenshot harness described
+   in :doc:`modernization/phase-3`.  The capture script stores PNG assets under
+   ``docs/_static/brain/`` for reference while drafting documentation, but the
+   generated files are not committed to the repository.
+
+Keyboard navigation and accessibility hints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+All primary canvases request ``StrongFocus`` so keyboard users can reach them
+with :kbd:`Tab`/:kbd:`Shift` + :kbd:`Tab`.  Global shortcuts such as
+:kbd:`Ctrl+D` (toggle quick settings), :kbd:`Ctrl+N` (screenshot) and
+:kbd:`Ctrl+E` (open the documentation) remain active even when a VisPy canvas is
+focused thanks to the action rebinding performed during initialization.  The
+:menuselection:`Help --> Shortcuts` entry—or the :kbd:`Ctrl+T` accelerator—opens
+an accessible table describing the available key sequences and their effects.
+
+.. note::
+   Capture the shortcuts helper overlay through the same Task 8 harness when
+   preparing release notes or tutorials so the keyboard table stays in sync with
+   the shipped GUI.  Like the theme previews, keep the exported PNGs out of the
+   tracked sources.
+
 .. _brainshortcuts:
 
 Shortcuts

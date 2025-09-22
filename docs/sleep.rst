@@ -145,6 +145,36 @@ The contextual menu allows to perform several functions such as the loading and 
 **Settings panel** :
 The setting panels is where most of the (advanced) functions of the software are! Among other things, you can control which channel to display, adjust the amplitudes, customize the spectrogram and hypnogram, compute the duration of each sleep stage, add annotations to the recording, and perform a bunch of semi-automatic detection (spindles, K-complexes...). See the section :ref:`sleep_settings_panel` for a description of each tab.
 
+Themes and accessibility
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Sleep ships with the same runtime theme manager as the Brain module.  Use the
+:menuselection:`Display --> Theme` submenu to toggle between the high contrast
+``Dark`` palette and the presentation-friendly ``Light`` variant; Visbrain
+persists the preference between launches so workshop demos and automated screen
+captures stay consistent.
+
+.. note::
+   Generate theme previews with the Task 8 screenshot harness referenced in
+   :doc:`modernization/phase-3` when preparing documentation updates.  The
+   captures land in ``docs/_static/brain/`` during the build step so writers can
+   embed or review them locally, but the PNG files stay out of version control.
+
+All canvases (channel grid, spectrogram, hypnogram, topo map and the global time
+axis) request keyboard focus and expose accessible names/descriptions, allowing
+screen readers and :kbd:`Tab` navigation to reference the active visualization.
+Global shortcuts remain active regardless of focus—for example :kbd:`Ctrl+D`
+toggles the settings panel, :kbd:`Ctrl+S` saves the hypnogram and :kbd:`Ctrl+T`
+opens the keyboard reference panel.  The :menuselection:`Help --> Shortcuts`
+entry uses the same accessible table as the Brain module and surfaces the
+scoring keys (:kbd:`1`/ :kbd:`2`/ :kbd:`3`, :kbd:`R`, etc.) alongside utility
+actions.
+
+.. note::
+   Use the same Task 8 harness to refresh the shortcuts helper overlay for Sleep
+   when preparing tutorials or changelogs.  Share the resulting PNGs alongside
+   release artifacts instead of checking them into the repository.
+
 .. _sleep_settings_panel:
 
 Settings panel tabs
@@ -612,22 +642,20 @@ After pressing one of those keys, the software will score accordingly the curren
 
 The software supports two modes of scoring, to allow scoring of both human or animal data:
 
-* **In "locked" mode (option "Lock scoring to display" checked), the "scoring
-window" is always equal to the display window**, and pressing a key will score
-the whole displayed epoch. By default in this mode, the slider step is equal
-to the duration of the displayed epoch. This mode is useful for scoring human datasets.
+* **Locked mode** (when :menuselection:`Display --> Lock scoring to display` is
+  enabled) keeps the scoring window equal to the display window, so pressing a
+  key scores the entire visible epoch. The slider step defaults to the display
+  duration, mirroring manual workflows for human datasets.
 
-* **In "unlocked" mode (option "Lock scoring to display" unchecked), the "scoring
-window" is independent from the display window**, letting the user score short
-epochs while visualizing the data around the scored epochs. The limits of the
-scoring window are indicated by vertical bars on the channel plots (which can be
-hidden by toggling the "Display scoring window" option). By entering the "Zoom"
-mode ("Zoom" in the menu options or shortcut "z"), the user can also zoom into
-the hypnogram to visualize the stages within the whole displayed epoch, and thus
-around the scored epoch. This is typically useful for scoring animal datasets.
-By default in this mode, the slider step is equal to the duration of the scoring
-window. The software will switch automatically to the "unlocked" mode when
-explicitly changing the scoring window size. 
+* **Unlocked mode** (when :menuselection:`Display --> Lock scoring to display`
+  is cleared) lets the scoring window move independently from the display
+  window, allowing you to label short epochs while retaining surrounding
+  context. Vertical bars on the channel plots mark the scoring window and can be
+  toggled via the :menuselection:`Display scoring window` action. The
+  :menuselection:`Display --> Zoom` tool (or :kbd:`Z`) refines the hypnogram view
+  around the scored epoch—handy for animal datasets. In this mode the slider
+  step follows the scoring window duration, and adjusting the window size
+  automatically disables the locked mode.
 
 
 .. warning::
@@ -635,15 +663,18 @@ explicitly changing the scoring window size.
 
 .. figure::  _static/sleep/sleep_scoring_locked.png
    :align:   center
-   Score the whole displayed epoch
+
+   Score the whole displayed epoch.
 
 .. figure::  _static/sleep/sleep_scoring_unlocked.png
    :align:   center
-   Score the epoch within the centered "scoring window"
+
+   Score the epoch within the centered "scoring window".
 
 .. figure::  _static/sleep/sleep_scoring_unlocked_zoom.png
    :align:   center
-   Use the "Zoom" mode to visualize the hypnogram around the scored epoch
+
+   Use the "Zoom" mode to visualize the hypnogram around the scored epoch.
 
 .. ----------------------------------------------------------------------------
 ..                              DETECTIONS

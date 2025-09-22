@@ -62,6 +62,11 @@ Rollout and testing
 * Refresh contributor guides once the regenerated stack lands, highlighting the
   PySide6 workflow, the supported Python/OS matrix and the VisPy baseline so
   developers verify patches on the official matrix before submitting changes.
+* Extend the user guides with runtime theme switching, keyboard shortcut
+  overlays and accessibility affordances.  Updated figures should be captured
+  through the Task 8 screenshot harness so documentation reflects the
+  high-contrast palettes and navigation hints available in the regenerated
+  widgets, while keeping the generated PNG assets out of version control.
 
 Supporting inventory
 --------------------
