@@ -1,15 +1,29 @@
 """Load data files.
 
-This file contain functions to load :
-- Matlab (*.mat)
-- Pickle (*.pickle)
-- NumPy (*.npy and *.npz)
-- Text (*.txt)
-- CSV (*.csv)
-- JSON (*.json)
+This module exposes small helpers to load a range of common data formats:
+
+* :func:`read_mat` returns a :class:`dict` mapping Matlab variables to numpy
+  arrays.
+* :func:`read_pickle` returns the deserialised Python object stored in a
+  pickle file or a subset of keys when ``vars`` is provided.
+* :func:`read_npy` yields the :class:`numpy.ndarray` stored in a ``.npy``
+  archive.
+* :func:`read_npz` returns a :class:`dict` mapping variable names to numpy
+  arrays from ``.npz`` archives, again supporting the ``vars`` selector.
+* :func:`read_txt` returns the textual contents of the file as a single
+  :class:`str`.
+* :func:`read_csv` returns the rows of a CSV file as a list of string lists.
+* :func:`read_json` returns the Python object decoded from the JSON document.
+
+All readers rely solely on the Python standard library (plus NumPy for the
+``.npy``/``.npz`` formats) so they are lightweight and easy to test.
 """
 import os
 import logging
+import json
+import pickle
+import csv
+from collections.abc import Iterable
 
 import numpy as np
 
@@ -29,10 +43,61 @@ def read_mat(path, vars=None):
     return loadmat(path, variable_names=vars)
 
 
+def _normalise_vars(vars):
+    """Return ``vars`` as a list and whether it was a single entry."""
+    if vars is None:
+        return None, False
+    if isinstance(vars, str):
+        return [vars], True
+    if isinstance(vars, Iterable):
+        vars = list(vars)
+        if len(vars) == 1:
+            return vars, True
+        return vars, False
+    return [vars], True
+
+
+def _extract_named_items(container, names, single):
+    """Extract a subset of ``names`` from ``container``."""
+    if names is None:
+        return container
+
+    try:
+        extracted = {name: container[name] for name in names}
+    except TypeError as exc:
+        raise TypeError(
+            "Loaded object does not support key-based access; "
+            "drop the `vars` argument to retrieve it as-is."
+        ) from exc
+    except KeyError as exc:  # pragma: no cover - defensive branch
+        missing = exc.args[0]
+        raise KeyError(f"Variable '{missing}' not found in container") from exc
+
+    if single:
+        return extracted[names[0]]
+    return extracted
+
+
 def read_pickle(path, vars=None):
-    """Read data from a Pickle (pickle) file."""
-    # np.loads? ou depuis import pickle
-    pass
+    """Read data from a Pickle (pickle) file.
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        Path to the pickle file.
+    vars : str or iterable of str, optional
+        Specific keys to extract when the pickle stores a mapping.
+
+    Returns
+    -------
+    Any or dict
+        The unpickled Python object, or the selected values when ``vars`` is
+        provided.
+    """
+    with open(path, 'rb') as file:
+        data = pickle.load(file)
+    names, single = _normalise_vars(vars)
+    return _extract_named_items(data, names, single)
 
 
 def read_npy(path):
@@ -41,23 +106,81 @@ def read_npy(path):
 
 
 def read_npz(path, vars=None):
-    """Read data from a Numpy (npz) file."""
-    pass
+    """Read data from a Numpy (npz) file.
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        Path to the NPZ archive.
+    vars : str or iterable of str, optional
+        Specific arrays to extract.
+
+    Returns
+    -------
+    dict[str, numpy.ndarray] or numpy.ndarray
+        A dictionary with all arrays found in the archive, or the selected
+        arrays when ``vars`` is provided. A single variable request yields the
+        corresponding array directly.
+    """
+    names, single = _normalise_vars(vars)
+    with np.load(path, allow_pickle=True) as archive:
+        if names is None:
+            data = {name: archive[name] for name in archive.files}
+        else:
+            data = _extract_named_items(archive, names, single)
+    return data
 
 
 def read_txt(path):
-    """Read data from a text (txt) file."""
-    pass
+    """Read data from a text (txt) file.
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        Path to the text file.
+
+    Returns
+    -------
+    str
+        Entire textual content of the file.
+    """
+    with open(path, 'r', encoding='utf-8') as file:
+        return file.read()
 
 
 def read_csv(path):
-    """Read data from a CSV (csv) file."""
-    pass
+    """Read data from a CSV (csv) file.
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        Path to the CSV file.
+
+    Returns
+    -------
+    list[list[str]]
+        Rows of the file, each represented as a list of fields.
+    """
+    with open(path, newline='', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        return [row for row in reader]
 
 
 def read_json(path):
-    """Read data from a JSON (json) file."""
-    pass
+    """Read data from a JSON (json) file.
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        Path to the JSON document.
+
+    Returns
+    -------
+    Any
+        The Python representation produced by :func:`json.load`.
+    """
+    with open(path, 'r', encoding='utf-8') as file:
+        return json.load(file)
 
 
 def read_stc(path):

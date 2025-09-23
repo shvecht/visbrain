@@ -93,6 +93,28 @@ datasets in a custom location. The downloader accepts ``--list`` to show all
 available assets and honours ``--dest`` or ``--use-pwd`` when you prefer to
 download into a project-specific directory.
 
+Local data helpers
+------------------
+
+Several convenience readers in :mod:`visbrain.io.read_data` simplify loading
+local files that complement the bundled resources. They wrap standard library
+parsers and therefore return familiar Python objects:
+
+* :func:`~visbrain.io.read_data.read_txt` returns the file contents as a
+  single string.
+* :func:`~visbrain.io.read_data.read_csv` yields the CSV rows as a list of
+  string lists, preserving the column order.
+* :func:`~visbrain.io.read_data.read_json` decodes JSON into Python
+  dictionaries, lists and primitives.
+* :func:`~visbrain.io.read_data.read_pickle` restores the original pickled
+  object (or specific keys when the pickle stores a mapping).
+* :func:`~visbrain.io.read_data.read_npz` exposes NumPy arrays from
+  compressed archives, returning a dictionary by default or a single array when
+  ``vars`` selects one name.
+
+These helpers integrate naturally with ``path_to_visbrain_data``; simply build
+the path and pass it to the appropriate reader.
+
 Regular installation
 --------------------
 
