@@ -5,6 +5,7 @@ from __future__ import annotations
 import datetime
 
 import numpy as np
+
 import pytest
 
 try:  # pragma: no cover - optional Qt bindings
@@ -13,6 +14,7 @@ except ImportError:  # pragma: no cover - Qt not installed
     QtCore = QtWidgets = None
 
 from visbrain.gui.sleep.model import SleepDataset
+from visbrain.io.mneio import build_sleep_payload
 
 
 pytestmark = [
@@ -151,7 +153,7 @@ def test_async_loader_dialog_main_thread(
     monkeypatch.setattr("visbrain.io.read_sleep.dialog_load", fake_dialog)
 
     def fake_switch(file, ext, downsample, kwargs_mne=None):
-        return (
+        return build_sleep_payload(
             sf,
             sf,
             1,
@@ -160,6 +162,7 @@ def test_async_loader_dialog_main_thread(
             data.shape[1],
             datetime.time(0, 0, 0),
             None,
+            metadata={'source': str(dummy_path)},
         )
 
     monkeypatch.setattr("visbrain.io.read_sleep.sleep_switch", fake_switch)
