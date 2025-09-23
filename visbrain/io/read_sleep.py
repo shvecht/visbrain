@@ -12,13 +12,19 @@ import io
 from warnings import warn
 import logging
 import datetime
+from typing import Any, Dict, Iterable, Optional
+
+try:
+    from visbrain.qt import QtCore, QtWidgets
+except Exception:  # pragma: no cover - optional Qt dependency
+    QtCore = QtWidgets = None  # type: ignore[assignment]
 
 import numpy as np
 from scipy.stats import iqr
 
 from visbrain.io.dependencies import is_mne_installed
 from visbrain.io.dialog import dialog_load
-from visbrain.io.mneio import mne_switch
+from visbrain.io.mneio import mne_switch, finalize_raw
 from visbrain.io.rw_hypno import (read_hypno, oversample_hypno)
 from visbrain.io.rw_utils import get_file_ext
 from visbrain.io.write_data import write_csv
@@ -32,7 +38,89 @@ from visbrain.config import PROFILER
 
 logger = logging.getLogger('visbrain')
 
+_DATA_FILE_FILTER = (
+    "Any EEG files (*.vhdr *.edf *.gdf *.bdf *.eeg *.egi *.mff *.cnt *.trc "
+    "*.set *.rec);;BrainVision (*.vhdr);;EDF (*.edf);;GDF (*.gdf);;"
+    "BDF (*.bdf);;Elan (*.eeg);;EGI (*.egi);;MFF (*.mff);;CNT (*.cnt);;"
+    "Micromed (*.trc);;EEGLab (*.set);;REC (*.rec)"
+)
+
+_HYPNO_FILE_FILTER = (
+    "Text file (*.txt);;Elan (*.hyp);;CSV file (*.csv);;EDF+ file(*.edf);;"
+    "All files (*.*)"
+)
+
+_BIDS_DATA_EXTENSIONS = (
+    '.vhdr',
+    '.edf',
+    '.bdf',
+    '.gdf',
+    '.set',
+    '.fif',
+    '.mff',
+    '.cnt',
+    '.trc',
+    '.rec',
+    '.eeg',
+)
+
+_BIDS_ENTITY_MAP = {
+    'sub': 'subject',
+    'ses': 'session',
+    'task': 'task',
+    'acq': 'acquisition',
+    'run': 'run',
+    'proc': 'processing',
+    'space': 'space',
+    'split': 'split',
+    'desc': 'description',
+    'rec': 'recording',
+}
+
 __all__ = ['ReadSleepData', 'get_sleep_stats']
+
+
+def _invoke_dialog(func, *args, **kwargs):
+    """Ensure Qt dialogs execute on the GUI thread."""
+
+    if QtCore is None or QtWidgets is None:
+        return func(*args, **kwargs)
+
+    app = QtWidgets.QApplication.instance()
+    if app is None:
+        return func(*args, **kwargs)
+
+    current_thread = QtCore.QThread.currentThread()
+    gui_thread = app.thread()
+    if gui_thread is None or gui_thread is current_thread:
+        return func(*args, **kwargs)
+
+    class _Invoker(QtCore.QObject):
+        def __init__(self) -> None:
+            super().__init__()
+            self._result: Any = None
+            self._error: Optional[BaseException] = None
+
+        @QtCore.Slot()
+        def invoke(self) -> None:  # pragma: no cover - exercised via GUI thread
+            try:
+                self._result = func(*args, **kwargs)
+            except BaseException as exc:  # pragma: no cover - defensive
+                self._error = exc
+
+        def result(self) -> Any:
+            if self._error is not None:
+                raise self._error
+            return self._result
+
+    proxy = _Invoker()
+    proxy.moveToThread(gui_thread)
+    QtCore.QMetaObject.invokeMethod(
+        proxy,
+        'invoke',
+        QtCore.Qt.BlockingQueuedConnection,
+    )
+    return proxy.result()
 
 
 class ReadSleepData(object):
@@ -42,15 +130,25 @@ class ReadSleepData(object):
                  downsample, kwargs_mne, annotations):
         """Init."""
         # ========================== LOAD DATA ==========================
+        kwargs_mne = dict(kwargs_mne or {})
+        if 'preload' in kwargs_mne:
+            preload = kwargs_mne['preload']
+        else:
+            kwargs_mne['preload'] = preload
+        if 'downsample' in kwargs_mne and kwargs_mne['downsample'] is not None:
+            downsample = kwargs_mne.pop('downsample')
+        else:
+            kwargs_mne.pop('downsample', None)
+
         # Dialog window if data is None :
         if data is None:
-            data = dialog_load(self, "Open dataset", '',
-                               "Any EEG files (*.vhdr *.edf *.gdf *.bdf *.eeg "
-                               "*.egi *.mff *.cnt *.trc *.set *.rec);;"
-                               "BrainVision (*.vhdr);;EDF (*.edf);;"
-                               "GDF (*.gdf);;BDF (*.bdf);;Elan (*.eeg);;"
-                               "EGI (*.egi);;MFF (*.mff);;CNT (*.cnt);;"
-                               "Micromed (*.trc);;EEGLab (*.set);;REC (*.rec)")
+            data = _invoke_dialog(
+                dialog_load,
+                self,
+                "Open dataset",
+                '',
+                _DATA_FILE_FILTER,
+            )
             upath = os.path.split(data)[0]
         else:
             upath = ''
@@ -58,12 +156,19 @@ class ReadSleepData(object):
         if isinstance(data, str):  # file is defined
             # ---------- USE SLEEP or MNE ----------
             # Find file extension :
-            file, ext = get_file_ext(data)
+            try:
+                file, ext = get_file_ext(data)
+            except ValueError:
+                if os.path.isdir(data):
+                    file, ext = data, ''
+                else:
+                    raise
             # Force to use MNE if preload is False :
             use_mne = True if not preload else use_mne
             # Get if the file has to be loaded using Sleep or MNE python :
             sleep_ext = ['.eeg', '.vhdr', '.edf', '.trc', '.rec']
-            use_mne = True if ext not in sleep_ext else use_mne
+            if ext not in sleep_ext or (ext == '' and os.path.isdir(file)):
+                use_mne = True
 
             if use_mne:
                 is_mne_installed(raise_error=True)
@@ -71,11 +176,24 @@ class ReadSleepData(object):
             # ---------- LOAD THE FILE ----------
             if use_mne:  # Load using MNE functions
                 logger.debug("Load file using MNE-python")
-                kwargs_mne['preload'] = preload
-                args = mne_switch(file, ext, downsample, **kwargs_mne)
+                kwargs_mne.setdefault('preload', preload)
+                if ext == '' and os.path.isdir(file):
+                    args = sleep_switch(
+                        file,
+                        ext,
+                        downsample,
+                        kwargs_mne=kwargs_mne,
+                    )
+                else:
+                    args = mne_switch(file, ext, downsample, **kwargs_mne)
             else:  # Load using Sleep functions
                 logger.debug("Load file using Sleep")
-                args = sleep_switch(file, ext, downsample)
+                args = sleep_switch(
+                    file,
+                    ext,
+                    downsample,
+                    kwargs_mne=kwargs_mne,
+                )
             # Get output arguments :
             (sf, downsample, dsf, data, channels, n, offset, annot) = args
             info = ("Data successfully loaded (%s):"
@@ -119,10 +237,13 @@ class ReadSleepData(object):
         # ========================== LOAD HYPNOGRAM ==========================
         # Dialog window for hypnogram :
         if hypno is None:
-            hypno = dialog_load(self, "Open hypnogram", upath,
-                                "Text file (*.txt);;Elan (*.hyp);;"
-                                "CSV file (*.csv);;EDF+ file(*.edf);"
-                                ";All files (*.*)")
+            hypno = _invoke_dialog(
+                dialog_load,
+                self,
+                "Open hypnogram",
+                upath,
+                _HYPNO_FILE_FILTER,
+            )
             hypno = None if hypno == '' else hypno
         if isinstance(hypno, np.ndarray):  # array_like
             if len(hypno) == n:
@@ -209,7 +330,151 @@ class ReadSleepData(object):
         PROFILER("Check data", level=1)
 
 
-def sleep_switch(file, ext, downsample):
+def _discover_bids_files(root: str) -> list[str]:
+    """Return candidate raw files contained inside a BIDS directory."""
+
+    matches: list[str] = []
+    for dirpath, _, filenames in os.walk(root):
+        for name in filenames:
+            if name.lower().endswith(_BIDS_DATA_EXTENSIONS):
+                matches.append(os.path.join(dirpath, name))
+    return sorted(matches)
+
+
+def _looks_like_bids(directory: str) -> bool:
+    """Heuristically determine whether *directory* follows BIDS layout."""
+
+    try:
+        entries = os.listdir(directory)
+    except OSError:
+        return False
+    if 'dataset_description.json' in entries or 'participants.tsv' in entries:
+        return True
+    return any(name.startswith('sub-') for name in entries)
+
+
+def _parse_bids_basename(basename: str) -> Dict[str, str]:
+    """Parse BIDS key-value pairs from a file basename."""
+
+    entities: Dict[str, str] = {}
+    parts = [part for part in basename.split('_') if part]
+    if not parts:
+        return entities
+
+    suffix_candidate = parts[-1]
+    if '-' in suffix_candidate:
+        key, value = suffix_candidate.split('-', 1)
+        mapped = _BIDS_ENTITY_MAP.get(key)
+        if mapped is not None:
+            entities[mapped] = value
+            suffix_candidate = ''
+    if suffix_candidate:
+        entities['suffix'] = suffix_candidate
+
+    for part in parts[:-1]:
+        if '-' not in part:
+            continue
+        key, value = part.split('-', 1)
+        mapped = _BIDS_ENTITY_MAP.get(key)
+        if mapped is not None:
+            entities[mapped] = value
+    return entities
+
+
+def _build_bids_path(raw_path: str, bids_root: str):
+    from mne_bids import BIDSPath
+
+    raw_path = os.path.abspath(raw_path)
+    bids_root = os.path.abspath(bids_root)
+    basename = os.path.splitext(os.path.basename(raw_path))[0]
+    entities = _parse_bids_basename(basename)
+
+    rel_parent = os.path.relpath(os.path.dirname(raw_path), bids_root)
+    datatype = os.path.basename(rel_parent)
+    if datatype in {'eeg', 'ieeg', 'meg', 'beh', 'anat', 'physio', 'pet'}:
+        entities['datatype'] = datatype
+
+    entities['extension'] = os.path.splitext(raw_path)[1]
+    entities.setdefault('suffix', entities.get('datatype', 'eeg'))
+    entities['root'] = bids_root
+
+    return BIDSPath(check=False, **entities)
+
+
+def _match_bids_candidate(
+    candidates: Iterable[str],
+    entities: Dict[str, str],
+    bids_root: str,
+):
+    if not candidates:
+        raise FileNotFoundError("No BIDS recordings found in %s" % bids_root)
+
+    if entities:
+        canonical = {(_BIDS_ENTITY_MAP.get(k, k)): v for k, v in entities.items()}
+        for path in candidates:
+            parsed = _parse_bids_basename(os.path.splitext(os.path.basename(path))[0])
+            if all(parsed.get(key) == value for key, value in canonical.items()):
+                return _build_bids_path(path, bids_root)
+        raise FileNotFoundError(
+            "No BIDS recordings in %s matched the provided entities" % bids_root
+        )
+
+    if len(candidates) > 1:
+        raise RuntimeError(
+            "Multiple BIDS recordings detected. Provide 'bids_path' or "
+            "'bids_entities' in kwargs_mne to disambiguate."
+        )
+    return _build_bids_path(candidates[0], bids_root)
+
+
+def _coerce_bids_path(reference: Any, bids_root: str):
+    from mne_bids import BIDSPath
+
+    if isinstance(reference, BIDSPath):
+        return reference.copy().update(root=bids_root, check=False)
+    if isinstance(reference, dict):
+        params = dict(reference)
+        params.setdefault('root', bids_root)
+        return BIDSPath(check=False, **params)
+    if isinstance(reference, str):
+        target = reference
+        if not os.path.isabs(target):
+            target = os.path.join(bids_root, target)
+        if os.path.isdir(target):
+            candidates = _discover_bids_files(target)
+            return _match_bids_candidate(candidates, {}, target)
+        return _build_bids_path(target, bids_root)
+    raise TypeError("Unsupported bids_path reference: %r" % (reference,))
+
+
+def _load_bids_directory(
+    directory: str,
+    downsample: Optional[float],
+    kwargs_mne: Dict[str, Any],
+):
+    from mne_bids import read_raw_bids
+
+    bids_root = os.path.abspath(directory)
+    bids_path_param = kwargs_mne.pop('bids_path', None)
+    entities = kwargs_mne.pop('bids_entities', {}) or {}
+    preload = kwargs_mne.pop('preload', True)
+    verbose = kwargs_mne.pop('verbose', None)
+    extra_params = kwargs_mne.pop('extra_params', {}) or {}
+    extra_params = dict(extra_params)
+
+    if bids_path_param is not None:
+        bids_path = _coerce_bids_path(bids_path_param, bids_root)
+    else:
+        candidates = _discover_bids_files(bids_root)
+        bids_path = _match_bids_candidate(candidates, entities, bids_root)
+
+    extra_params.setdefault('preload', preload)
+    extra_params.update(kwargs_mne)
+    raw = read_raw_bids(bids_path, extra_params=extra_params, verbose=verbose)
+    return finalize_raw(raw, downsample)
+
+
+def sleep_switch(file, ext, downsample, kwargs_mne=None):
     """Switch between sleep data files.
 
     Parameters
@@ -220,6 +485,8 @@ def sleep_switch(file, ext, downsample):
         Extension name (e.g. '.eeg')
     downsample : int
         Down-sampling frequency.
+    kwargs_mne : dict | None
+        Additional parameters forwarded to the MNE readers when applicable.
 
     Returns
     -------
@@ -241,7 +508,18 @@ def sleep_switch(file, ext, downsample):
         Array of annotations.
     """
     # Get full path :
-    path = file + ext
+    kwargs_mne = dict(kwargs_mne or {})
+    path = file + ext if ext else file
+
+    if ext == '' and os.path.isdir(file) and _looks_like_bids(file):
+        try:
+            return _load_bids_directory(file, downsample, kwargs_mne)
+        except Exception as exc:
+            logger.warning(
+                "Falling back to legacy readers for %s due to %s",
+                file,
+                exc,
+            )
 
     if ext == '.vhdr':  # BrainVision
         return read_bva(path, downsample)

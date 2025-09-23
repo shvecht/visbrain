@@ -3,7 +3,7 @@ import datetime
 import numpy as np
 from ..utils import get_dsf
 
-__all__ = ['mne_switch']
+__all__ = ['mne_switch', 'finalize_raw']
 
 
 def mne_switch(file, ext, downsample, preload=True, **kwargs):
@@ -60,19 +60,30 @@ def mne_switch(file, ext, downsample, preload=True, **kwargs):
     else:
         raise IOError("File not supported by mne-python.")
 
+    return finalize_raw(raw, downsample)
+
+
+def finalize_raw(raw, downsample):
+    """Convert an :class:`mne.io.BaseRaw` instance to numpy arrays."""
+
     raw.pick_types(meg=True, eeg=True, ecg=True, emg=True)  # Remove stim lines
     sf = raw.info['sfreq']
     dsf, downsample = get_dsf(downsample, sf)
     channels = raw.info['ch_names']
-    data = raw._data
 
-    # Conversion Volt (MNE) to microVolt (Visbrain):
-    if raw._raw_extras[0] is not None and 'units' in raw._raw_extras[0]:
-        units = raw._raw_extras[0]['units'][0:data.shape[0]]
-        data /= np.array(units).reshape(-1, 1)
+    data = getattr(raw, '_data', None)
+    if data is None:
+        data = raw.get_data(picks=None)
+    data = np.asarray(data)
+    extras = getattr(raw, '_raw_extras', ())
+    if extras and extras[0] is not None and 'units' in extras[0]:
+        units = np.array(extras[0]['units'][0:data.shape[0]], dtype=float)
+        # Ensure we do not mutate the Raw object scaling factors in-place.
+        data = np.array(data, copy=True)
+        data /= units.reshape(-1, 1)
 
     n = data.shape[1]
-    start_time = datetime.time(0, 0, 0)  # raw.info['meas_date']
-    anot = raw.annotations
+    start_time = datetime.time(0, 0, 0)
+    anot = getattr(raw, 'annotations', None)
 
     return sf, downsample, dsf, data[:, ::dsf], channels, n, start_time, anot

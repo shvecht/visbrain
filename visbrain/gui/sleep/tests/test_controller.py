@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+import datetime
+
 import numpy as np
 import pytest
 
 try:  # pragma: no cover - optional Qt bindings
-    from visbrain.qt import QtWidgets
+    from visbrain.qt import QtCore, QtWidgets
 except ImportError:  # pragma: no cover - Qt not installed
-    QtWidgets = None
+    QtCore = QtWidgets = None
+
+from visbrain.gui.sleep.model import SleepDataset
 
 
 pytestmark = [
@@ -93,3 +97,89 @@ def test_save_and_load_helpers(sleep_controller, tmp_path):
     numpy_annotations = np.array([5.0, 10.0, 15.0])
     sleep_controller._load_annotation_table(filename=numpy_annotations)
     assert sleep_controller._AnnotateTable.rowCount() == numpy_annotations.size
+
+
+def test_async_loader_updates_model(sleep_controller, qtbot, synthetic_sleep_arrays):
+    """Loading datasets in a worker thread hydrates the controller model."""
+
+    data, hypno, channels, sf = synthetic_sleep_arrays
+    scaled = data * 3.0
+
+    timer_fired = []
+    timer = QtCore.QTimer()
+    timer.setSingleShot(True)
+    timer.timeout.connect(lambda: timer_fired.append(True))
+    timer.start(0)
+
+    future = sleep_controller.load_dataset_async(
+        data=scaled.copy(),
+        channels=channels,
+        sf=sf,
+        hypno=hypno.copy(),
+        href=["art", "wake", "rem", "n1", "n2", "n3"],
+        preload=True,
+        use_mne=False,
+        downsample=sf,
+        kwargs_mne={},
+        annotations=None,
+    )
+
+    qtbot.waitUntil(lambda: timer_fired, timeout=1000)
+    qtbot.waitUntil(future.done, timeout=3000)
+
+    dataset = future.result(timeout=0.1)
+    assert isinstance(dataset, SleepDataset)
+    np.testing.assert_allclose(sleep_controller._model.data, scaled)
+    assert sleep_controller._model.n_points == scaled.shape[1]
+
+
+def test_async_loader_dialog_main_thread(
+    sleep_controller, qtbot, synthetic_sleep_arrays, tmp_path, monkeypatch
+):
+    """File dialogs invoked from background loads run on the GUI thread."""
+
+    data, hypno, channels, sf = synthetic_sleep_arrays
+    dummy_path = tmp_path / "dummy.edf"
+    dummy_path.write_bytes(b"")
+
+    dialog_threads = []
+
+    def fake_dialog(self, title, default, filters):
+        dialog_threads.append(QtCore.QThread.currentThread())
+        return str(dummy_path)
+
+    monkeypatch.setattr("visbrain.io.read_sleep.dialog_load", fake_dialog)
+
+    def fake_switch(file, ext, downsample, kwargs_mne=None):
+        return (
+            sf,
+            sf,
+            1,
+            data.copy(),
+            channels,
+            data.shape[1],
+            datetime.time(0, 0, 0),
+            None,
+        )
+
+    monkeypatch.setattr("visbrain.io.read_sleep.sleep_switch", fake_switch)
+
+    future = sleep_controller.load_dataset_async(
+        data=None,
+        channels=None,
+        sf=sf,
+        hypno=hypno.copy(),
+        href=["art", "wake", "rem", "n1", "n2", "n3"],
+        preload=True,
+        use_mne=False,
+        downsample=sf,
+        kwargs_mne={},
+    )
+
+    qtbot.waitUntil(future.done, timeout=3000)
+    future.result(timeout=0.1)
+
+    assert dialog_threads, "dialog_load should be invoked"
+    app = QtWidgets.QApplication.instance()
+    assert app is not None
+    assert all(thread is app.thread() for thread in dialog_threads)
