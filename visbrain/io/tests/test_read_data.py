@@ -1,7 +1,11 @@
 """Test function in read_data.py."""
 
+import csv
+import json
 import os
+import pickle
 
+import numpy as np
 import pytest
 
 from visbrain.io import path_to_visbrain_data
@@ -62,6 +66,58 @@ class TestReadData(object):
             )
         vert, faces = read_obj(file)
         self._test_mesh(vert, faces)
+
+    def test_read_pickle(self, tmp_path):
+        """Pickle files should round-trip plain Python structures."""
+        payload = {'alpha': 1, 'beta': [1, 2, 3]}
+        file = tmp_path / 'data.pkl'
+        with file.open('wb') as fid:
+            pickle.dump(payload, fid)
+
+        assert read_pickle(file) == payload
+        assert read_pickle(file, vars='alpha') == payload['alpha']
+        subset = read_pickle(file, vars=('alpha', 'beta'))
+        assert subset == payload
+
+    def test_read_npz(self, tmp_path):
+        """NPZ files should expose the stored NumPy arrays."""
+        file = tmp_path / 'arrays.npz'
+        reference = {
+            'a': np.arange(3),
+            'b': np.eye(2),
+        }
+        np.savez(file, **reference)
+
+        result = read_npz(file)
+        assert set(result) == set(reference)
+        np.testing.assert_array_equal(result['a'], reference['a'])
+        np.testing.assert_array_equal(read_npz(file, 'b'), reference['b'])
+
+    def test_read_txt(self, tmp_path):
+        """Text files should be returned as raw strings."""
+        file = tmp_path / 'notes.txt'
+        content = 'line one\nline two\n'
+        file.write_text(content, encoding='utf-8')
+
+        assert read_txt(file) == content
+
+    def test_read_csv(self, tmp_path):
+        """CSV files are returned as row-major lists of strings."""
+        file = tmp_path / 'data.csv'
+        rows = [['name', 'value'], ['alpha', '1'], ['beta', '2']]
+        with file.open('w', newline='', encoding='utf-8') as fid:
+            writer = csv.writer(fid)
+            writer.writerows(rows)
+
+        assert read_csv(file) == rows
+
+    def test_read_json(self, tmp_path):
+        """JSON files should be deserialised to native Python objects."""
+        file = tmp_path / 'data.json'
+        payload = {'alpha': 1, 'beta': ['x', 'y']}
+        file.write_text(json.dumps(payload), encoding='utf-8')
+
+        assert read_json(file) == payload
 
     # @pytest.mark.slow
     # def test_read_nifti(self):
