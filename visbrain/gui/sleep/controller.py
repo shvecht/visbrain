@@ -2,17 +2,23 @@
 
 from __future__ import annotations
 
+import logging
+
 import numpy as np
 
 from visbrain.config import PROFILER
 from visbrain.utils import MouseEventControl, color2vb
 
 from .interface import UiElements
+from .loader import AsyncSleepLoader
+from .model import SleepDataset
 from .visuals import Visuals
 
 
 class SleepController(UiElements, Visuals, MouseEventControl):
     """Encapsulate business logic for the Sleep GUI."""
+
+    _logger = logging.getLogger("visbrain")
 
     def __init__(self, model, view, *, axis=True, config_file=None):
         object.__setattr__(self, "_model", model)
@@ -22,6 +28,7 @@ class SleepController(UiElements, Visuals, MouseEventControl):
         self._config_file = config_file
         self._annot_mark = np.array([])
         self._ax = axis
+        self._async_loader = AsyncSleepLoader()
 
         # Default rendering parameters
         self._lw = 1.0
@@ -215,6 +222,81 @@ class SleepController(UiElements, Visuals, MouseEventControl):
     @property
     def _custom_detections(self):
         return self._model.custom_detections
+
+    # ------------------------------------------------------------------
+    # Asynchronous loading
+    # ------------------------------------------------------------------
+    def load_dataset_async(
+        self,
+        *,
+        data=None,
+        channels=None,
+        sf=None,
+        hypno=None,
+        href=None,
+        preload=None,
+        use_mne=None,
+        downsample=None,
+        kwargs_mne=None,
+        annotations=None,
+    ):
+        """Load a dataset in the background and hydrate the existing model."""
+
+        if href is None:
+            href = list(self._model.href)
+        if channels is None:
+            channels = list(self._model.channels)
+        if sf is None:
+            sf = float(self._model.sfori)
+        if preload is None:
+            preload = True
+        if use_mne is None:
+            use_mne = False
+        if downsample is None:
+            downsample = float(self._model.sf)
+        if kwargs_mne is None:
+            kwargs_mne = {}
+        else:
+            kwargs_mne = dict(kwargs_mne)
+
+        def _on_result(dataset: SleepDataset) -> None:
+            self._hydrate_from_dataset(dataset)
+
+        def _on_error(exc: BaseException) -> None:  # pragma: no cover - defensive
+            self._logger.error("Asynchronous sleep load failed", exc_info=exc)
+
+        return self._async_loader.submit(
+            SleepDataset,
+            data,
+            channels,
+            sf,
+            hypno,
+            href,
+            preload,
+            use_mne,
+            downsample,
+            kwargs_mne,
+            annotations,
+            on_result=_on_result,
+            on_error=_on_error,
+        )
+
+    def _hydrate_from_dataset(self, dataset: SleepDataset) -> None:
+        """Populate the current model with arrays from *dataset*."""
+
+        self._model.data = np.array(dataset.data, copy=True)
+        self._model.hypno = np.array(dataset.hypno, copy=True)
+        self._model.time = np.array(dataset.time, copy=True)
+        self._model.channels = list(dataset.channels)
+        self._model.href = list(dataset.href)
+        self._model.hconv = dict(dataset.hconv)
+        self._model.sf = float(dataset.sf)
+        self._model.sfori = float(dataset.sfori)
+        self._model.dsf = int(dataset.dsf)
+        self._model.n_points = int(dataset.n_points)
+        self._model.file = dataset.file
+        self._model.annotations = np.array(dataset.annotations, copy=True)
+        self._get_data_info()
 
     # ------------------------------------------------------------------
     # Initialization helpers
