@@ -12,7 +12,7 @@ import io
 from warnings import warn
 import logging
 import datetime
-from typing import Any, Dict, Iterable, Optional
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 try:
     from visbrain.qt import QtCore, QtWidgets
@@ -22,9 +22,9 @@ except Exception:  # pragma: no cover - optional Qt dependency
 import numpy as np
 from scipy.stats import iqr
 
-from visbrain.io.dependencies import is_mne_installed
+from visbrain.io.dependencies import is_mne_installed, is_mne_bids_installed
 from visbrain.io.dialog import dialog_load
-from visbrain.io.mneio import mne_switch, finalize_raw
+from visbrain.io.mneio import build_sleep_payload, finalize_raw, mne_switch
 from visbrain.io.rw_hypno import (read_hypno, oversample_hypno)
 from visbrain.io.rw_utils import get_file_ext
 from visbrain.io.write_data import write_csv
@@ -123,6 +123,202 @@ def _invoke_dialog(func, *args, **kwargs):
     return proxy.result()
 
 
+_PAYLOAD_FIELDS = (
+    "sf",
+    "downsample",
+    "dsf",
+    "data",
+    "channels",
+    "n",
+    "start_time",
+    "annotations",
+)
+
+
+def _ensure_payload(payload: Any) -> Dict[str, Any]:
+    """Normalize payloads emitted by readers into a canonical mapping."""
+
+    if isinstance(payload, Mapping):
+        missing = [field for field in _PAYLOAD_FIELDS if field not in payload]
+        if missing:
+            raise KeyError(f"Incomplete payload missing fields: {missing}")
+        metadata = dict(payload.get("metadata") or {})
+        return build_sleep_payload(
+            payload["sf"],
+            payload.get("downsample"),
+            payload["dsf"],
+            payload["data"],
+            payload["channels"],
+            payload["n"],
+            payload["start_time"],
+            payload["annotations"],
+            metadata=metadata,
+        )
+
+    if isinstance(payload, (tuple, list)) and len(payload) >= len(_PAYLOAD_FIELDS):
+        base = payload[: len(_PAYLOAD_FIELDS)]
+        metadata = (
+            payload[len(_PAYLOAD_FIELDS)]
+            if len(payload) > len(_PAYLOAD_FIELDS)
+            else None
+        )
+        return build_sleep_payload(*base, metadata=metadata)
+
+    raise TypeError(f"Unsupported payload type: {type(payload)!r}")
+
+
+def _legacy_payload(
+    result: Sequence[Any],
+    path: str,
+    loader_name: str,
+) -> Dict[str, Any]:
+    metadata = {
+        "library": "visbrain",
+        "loader": loader_name,
+        "source": os.path.abspath(path),
+    }
+    return build_sleep_payload(*result, metadata=metadata)
+
+
+def _select_bids_recording(
+    candidates: Iterable[str],
+    entities: Mapping[str, str],
+    bids_root: str,
+    resolve: Any,
+) -> Tuple[str, Dict[str, Any]]:
+    paths = sorted(candidates)
+    if not paths:
+        raise FileNotFoundError(f"No BIDS recordings found in {bids_root}")
+
+    canonical = {
+        (_BIDS_ENTITY_MAP.get(k, k)): v
+        for k, v in dict(entities).items()
+        if v
+    }
+    parsed_entries: List[Tuple[str, Dict[str, str]]] = []
+    matched: List[Tuple[str, Dict[str, str]]] = []
+
+    for path in paths:
+        parsed = _parse_bids_basename(os.path.splitext(os.path.basename(path))[0])
+        parsed_entries.append((path, parsed))
+        if canonical and not all(
+            parsed.get(key) == value for key, value in canonical.items()
+        ):
+            continue
+        matched.append((path, parsed))
+
+    if canonical and not matched:
+        available = ", ".join(
+            os.path.relpath(path, bids_root) for path, _ in parsed_entries
+        )
+        raise FileNotFoundError(
+            "No BIDS recordings in %s matched entities %s. Available recordings: %s"
+            % (bids_root, canonical, available or "<none>"),
+        )
+
+    pool = matched if matched else parsed_entries
+    if len(pool) == 1:
+        selected_path = pool[0][0]
+        summary = {
+            "strategy": "unique-match" if matched else "unique-candidate",
+            "candidates": [os.path.relpath(path, bids_root) for path, _ in pool],
+            "selected": os.path.relpath(selected_path, bids_root),
+            "selected_abspath": os.path.abspath(selected_path),
+            "entities": canonical,
+            "matched": bool(matched),
+        }
+        return selected_path, summary
+
+    selected_path, summary = _resolve_bids_strategy(pool, resolve, bids_root, canonical)
+    return selected_path, summary
+
+
+def _resolve_bids_strategy(
+    pool: Sequence[Tuple[str, Dict[str, str]]],
+    resolve: Any,
+    bids_root: str,
+    canonical: Mapping[str, str],
+) -> Tuple[str, Dict[str, Any]]:
+    strategy = resolve
+    if strategy is None:
+        strategy = 'raise'
+
+    def _serialize_candidates() -> str:
+        return ", ".join(os.path.relpath(path, bids_root) for path, _ in pool)
+
+    if isinstance(strategy, str):
+        key = strategy.lower()
+        if key in {'raise', 'error', 'strict'}:
+            message = (
+                "Multiple BIDS recordings detected in %s (%s). "
+                "Provide 'bids_entities' or set 'bids_resolve' "
+                "(first/last/index) to choose one."
+                % (bids_root, _serialize_candidates())
+            )
+            raise RuntimeError(message)
+        if key == 'first':
+            selected = pool[0]
+            label = 'first'
+        elif key == 'last':
+            selected = pool[-1]
+            label = 'last'
+        elif key.isdigit():
+            index = int(key)
+            if index >= len(pool):
+                count = len(pool)
+                raise IndexError(
+                    f"bids_resolve index {index} out of range for {count} recordings"
+                )
+            selected = pool[index]
+            label = f'index:{index}'
+        else:
+            raise ValueError(
+                f"Unsupported bids_resolve strategy '{strategy}'"
+            )
+    elif isinstance(strategy, int):
+        index = strategy
+        if index < 0:
+            index += len(pool)
+        if index < 0 or index >= len(pool):
+            raise IndexError(
+                f"bids_resolve index {strategy} out of range for {len(pool)} recordings"
+            )
+        selected = pool[index]
+        label = f'index:{strategy}'
+    elif callable(strategy):
+        try:
+            result = strategy([path for path, _ in pool])
+        except Exception as exc:  # pragma: no cover - defensive
+            raise RuntimeError("Callable bids_resolve failed") from exc
+        if result is None:
+            raise RuntimeError("Callable bids_resolve returned None")
+        candidates = {path for path, _ in pool}
+        if result not in candidates:
+            choices = ", ".join(sorted(candidates))
+            raise ValueError(
+                "Callable bids_resolve must return one of: %s" % choices
+            )
+        for entry in pool:
+            if entry[0] == result:
+                selected = entry
+                break
+        else:  # pragma: no cover - defensive
+            raise RuntimeError("Callable bids_resolve returned unexpected path")
+        label = getattr(strategy, '__name__', 'callable')
+    else:
+        raise TypeError(f"Unsupported bids_resolve value: {type(strategy)!r}")
+
+    summary = {
+        "strategy": label,
+        "candidates": [os.path.relpath(path, bids_root) for path, _ in pool],
+        "selected": os.path.relpath(selected[0], bids_root),
+        "selected_abspath": os.path.abspath(selected[0]),
+        "entities": dict(canonical),
+        "matched": bool(canonical),
+    }
+    return selected[0], summary
+
+
 class ReadSleepData(object):
     """Main class for reading sleep data."""
 
@@ -153,7 +349,12 @@ class ReadSleepData(object):
         else:
             upath = ''
 
+        payload: Optional[Dict[str, Any]] = None
+        payload_metadata: Dict[str, Any] = {}
+        file_ref: Optional[str] = None
+
         if isinstance(data, str):  # file is defined
+            logger.info("Loading dataset from %s", data)
             # ---------- USE SLEEP or MNE ----------
             # Find file extension :
             try:
@@ -175,37 +376,58 @@ class ReadSleepData(object):
 
             # ---------- LOAD THE FILE ----------
             if use_mne:  # Load using MNE functions
-                logger.debug("Load file using MNE-python")
+                logger.debug("Load file using MNE-python (ext=%s)", ext or '<dir>')
                 kwargs_mne.setdefault('preload', preload)
                 if ext == '' and os.path.isdir(file):
-                    args = sleep_switch(
+                    payload = sleep_switch(
                         file,
                         ext,
                         downsample,
                         kwargs_mne=kwargs_mne,
                     )
                 else:
-                    args = mne_switch(file, ext, downsample, **kwargs_mne)
+                    payload = mne_switch(file, ext, downsample, **kwargs_mne)
             else:  # Load using Sleep functions
-                logger.debug("Load file using Sleep")
-                args = sleep_switch(
+                logger.debug("Load file using Sleep legacy readers (ext=%s)", ext)
+                payload = sleep_switch(
                     file,
                     ext,
                     downsample,
                     kwargs_mne=kwargs_mne,
                 )
-            # Get output arguments :
-            (sf, downsample, dsf, data, channels, n, offset, annot) = args
-            info = ("Data successfully loaded (%s):"
-                    "\n- Sampling-frequency : %.2fHz"
-                    "\n- Number of time points (before down-sampling): %i"
-                    "\n- Down-sampling frequency : %.2fHz"
-                    "\n- Number of time points (after down-sampling): %i"
-                    "\n- Number of channels : %i"
-                    )
+
+            payload = _ensure_payload(payload)
+            payload_metadata = dict(payload.get('metadata', {}))
+            info = (
+                "Data successfully loaded (%s):"
+                "\n- Sampling-frequency : %.2fHz"
+                "\n- Number of time points (before down-sampling): %i"
+                "\n- Down-sampling frequency : %.2fHz"
+                "\n- Number of time points (after down-sampling): %i"
+                "\n- Number of channels : %i"
+            )
+            sf = payload['sf']
+            n = payload['n']
+            downsample = payload.get('downsample')
+            dsf = payload['dsf']
+            data = payload['data']
+            channels = payload['channels']
+            offset = payload['start_time']
+            annot = payload['annotations']
             n_channels, n_pts_after = data.shape
-            logger.info(info % (file + ext, sf, n, downsample, n_pts_after,
-                                n_channels))
+            source_path = payload_metadata.get('source')
+            display_name = source_path or (file + ext)
+            file_ref = display_name
+            logger.info(
+                info % (
+                    display_name,
+                    sf,
+                    n,
+                    downsample if downsample is not None else sf,
+                    n_pts_after,
+                    n_channels,
+                )
+            )
             PROFILER("Data file loaded", level=1)
 
         elif isinstance(data, np.ndarray):  # array of data is defined
@@ -218,13 +440,19 @@ class ReadSleepData(object):
             dsf, downsample = get_dsf(downsample, sf)
             n = data.shape[1]
             data = data[:, ::dsf]
+            payload_metadata = {
+                'library': 'numpy',
+                'loader': 'ndarray',
+                'source': 'ndarray',
+            }
         else:
             raise IOError("The data should either be a string which refer to "
                           "the path of a file or an array of raw data of shape"
                           " (n_electrodes, n_time_points).")
 
         # Keep variables :
-        self._file = file
+        self._file = file_ref or file
+        self._metadata = dict(payload_metadata)
         self._annot_file = np.c_[merge_annotations(annotations, annot)]
         self._N = n
         self._dsf = dsf
@@ -329,6 +557,12 @@ class ReadSleepData(object):
         self._hconv = conv
         PROFILER("Check data", level=1)
 
+    @property
+    def metadata(self) -> Dict[str, Any]:
+        """Return metadata associated with the loaded dataset."""
+
+        return dict(self._metadata)
+
 
 def _discover_bids_files(root: str) -> list[str]:
     """Return candidate raw files contained inside a BIDS directory."""
@@ -403,28 +637,25 @@ def _build_bids_path(raw_path: str, bids_root: str):
 
 def _match_bids_candidate(
     candidates: Iterable[str],
-    entities: Dict[str, str],
+    entities: Mapping[str, str],
     bids_root: str,
-):
-    if not candidates:
-        raise FileNotFoundError("No BIDS recordings found in %s" % bids_root)
-
-    if entities:
-        canonical = {(_BIDS_ENTITY_MAP.get(k, k)): v for k, v in entities.items()}
-        for path in candidates:
-            parsed = _parse_bids_basename(os.path.splitext(os.path.basename(path))[0])
-            if all(parsed.get(key) == value for key, value in canonical.items()):
-                return _build_bids_path(path, bids_root)
-        raise FileNotFoundError(
-            "No BIDS recordings in %s matched the provided entities" % bids_root
-        )
-
-    if len(candidates) > 1:
-        raise RuntimeError(
-            "Multiple BIDS recordings detected. Provide 'bids_path' or "
-            "'bids_entities' in kwargs_mne to disambiguate."
-        )
-    return _build_bids_path(candidates[0], bids_root)
+    *,
+    resolve: Any = None,
+) -> Tuple[Any, Dict[str, Any]]:
+    selected_path, summary = _select_bids_recording(
+        candidates,
+        entities,
+        bids_root,
+        resolve,
+    )
+    logger.info(
+        "Resolved BIDS selection using strategy '%s': %s",
+        summary["strategy"],
+        summary["selected"],
+    )
+    bids_path = _build_bids_path(selected_path, bids_root)
+    summary["bids_path"] = str(bids_path)
+    return bids_path, summary
 
 
 def _coerce_bids_path(reference: Any, bids_root: str):
@@ -442,7 +673,8 @@ def _coerce_bids_path(reference: Any, bids_root: str):
             target = os.path.join(bids_root, target)
         if os.path.isdir(target):
             candidates = _discover_bids_files(target)
-            return _match_bids_candidate(candidates, {}, target)
+            bids_path, _ = _match_bids_candidate(candidates, {}, target)
+            return bids_path
         return _build_bids_path(target, bids_root)
     raise TypeError("Unsupported bids_path reference: %r" % (reference,))
 
@@ -452,11 +684,13 @@ def _load_bids_directory(
     downsample: Optional[float],
     kwargs_mne: Dict[str, Any],
 ):
+    is_mne_bids_installed(raise_error=True)
     from mne_bids import read_raw_bids
 
     bids_root = os.path.abspath(directory)
     bids_path_param = kwargs_mne.pop('bids_path', None)
     entities = kwargs_mne.pop('bids_entities', {}) or {}
+    bids_resolve = kwargs_mne.pop('bids_resolve', None)
     preload = kwargs_mne.pop('preload', True)
     verbose = kwargs_mne.pop('verbose', None)
     extra_params = kwargs_mne.pop('extra_params', {}) or {}
@@ -464,14 +698,46 @@ def _load_bids_directory(
 
     if bids_path_param is not None:
         bids_path = _coerce_bids_path(bids_path_param, bids_root)
+        selection_summary = {
+            'strategy': 'explicit-path',
+            'candidates': [],
+            'selected': str(bids_path),
+            'selected_abspath': str(bids_path),
+            'entities': dict(entities),
+            'matched': True,
+            'bids_path': str(bids_path),
+        }
     else:
         candidates = _discover_bids_files(bids_root)
-        bids_path = _match_bids_candidate(candidates, entities, bids_root)
+        bids_path, selection_summary = _match_bids_candidate(
+            candidates,
+            entities,
+            bids_root,
+            resolve=bids_resolve,
+        )
 
     extra_params.setdefault('preload', preload)
     extra_params.update(kwargs_mne)
     raw = read_raw_bids(bids_path, extra_params=extra_params, verbose=verbose)
-    return finalize_raw(raw, downsample)
+
+    bids_metadata = {
+        'bids': {
+            'root': bids_root,
+            'entities': dict(selection_summary.get('entities', {})),
+            'candidates': list(selection_summary.get('candidates', [])),
+            'strategy': selection_summary.get('strategy'),
+            'selected': selection_summary.get('selected'),
+        },
+        'source': selection_summary.get('selected_abspath', bids_root),
+    }
+    if entities:
+        bids_metadata['bids']['requested_entities'] = dict(entities)
+    if selection_summary.get('bids_path'):
+        bids_metadata['bids']['bids_path'] = selection_summary['bids_path']
+    if bids_resolve is not None:
+        bids_metadata['bids']['resolve'] = bids_resolve
+
+    return finalize_raw(raw, downsample, metadata=bids_metadata)
 
 
 def sleep_switch(file, ext, downsample, kwargs_mne=None):
@@ -509,6 +775,7 @@ def sleep_switch(file, ext, downsample, kwargs_mne=None):
     """
     # Get full path :
     kwargs_mne = dict(kwargs_mne or {})
+    legacy_kwargs = dict(kwargs_mne)
     path = file + ext if ext else file
 
     if ext == '' and os.path.isdir(file) and _looks_like_bids(file):
@@ -516,22 +783,66 @@ def sleep_switch(file, ext, downsample, kwargs_mne=None):
             return _load_bids_directory(file, downsample, kwargs_mne)
         except Exception as exc:
             logger.warning(
-                "Falling back to legacy readers for %s due to %s",
+                "Falling back to file-based loading for %s due to %s",
                 file,
                 exc,
             )
+            candidates = _discover_bids_files(file)
+            if candidates:
+                fallback_entities = legacy_kwargs.get('bids_entities', {}) or {}
+                fallback_resolve = legacy_kwargs.get('bids_resolve', 'first')
+                try:
+                    selected_path, selection_summary = _select_bids_recording(
+                        candidates,
+                        fallback_entities,
+                        file,
+                        fallback_resolve,
+                    )
+                except Exception as select_exc:
+                    logger.debug(
+                        "Failed to resolve fallback candidate in %s: %s",
+                        file,
+                        select_exc,
+                    )
+                else:
+                    for key in ('bids_entities', 'bids_path', 'bids_resolve'):
+                        legacy_kwargs.pop(key, None)
+                    fallback_file, fallback_ext = os.path.splitext(selected_path)
+                    logger.info(
+                        "Attempting fallback load of %s using extension %s",
+                        selected_path,
+                        fallback_ext or '<unknown>',
+                    )
+                    try:
+                        payload = mne_switch(
+                            fallback_file,
+                            fallback_ext,
+                            downsample,
+                            **legacy_kwargs,
+                        )
+                    except Exception as mne_exc:  # pragma: no cover - defensive
+                        logger.debug("MNE fallback failed: %s", mne_exc)
+                    else:
+                        payload_metadata = dict(payload.get('metadata', {}))
+                        fallback_meta = payload_metadata.setdefault('fallback', {})
+                        fallback_meta['reason'] = str(exc)
+                        fallback_meta['strategy'] = selection_summary.get('strategy')
+                        fallback_meta['selected'] = selection_summary.get('selected')
+                        payload['metadata'] = payload_metadata
+                        return payload
 
     if ext == '.vhdr':  # BrainVision
-        return read_bva(path, downsample)
+        return _legacy_payload(read_bva(path, downsample), path, 'brainvision')
 
     if ext == '.eeg':  # Elan
-        return read_elan(path, downsample)
+        return _legacy_payload(read_elan(path, downsample), path, 'elan')
 
     elif ext in ['.edf', '.rec']:  # European Data Format
-        return read_edf(path, downsample)
+        label = 'edf' if ext == '.edf' else 'rec'
+        return _legacy_payload(read_edf(path, downsample), path, label)
 
     elif ext == '.trc':  # Micromed
-        return read_trc(path, downsample)
+        return _legacy_payload(read_trc(path, downsample), path, 'micromed')
 
     else:  # None
         raise ValueError("*" + ext + " files are currently not supported.")

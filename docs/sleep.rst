@@ -537,6 +537,25 @@ Finally, it is possible to load several other file formats using `MNE Python pac
   # Now, pass all the data to the Sleep module :
   Sleep(data=data).show()
 
+.. tip::
+   Sleep understands complete BIDS directories.  When calling :class:`Sleep` or
+   :meth:`SleepController.load_dataset_async` you can forward BIDS-specific
+   parameters through ``kwargs_mne`` to avoid manually locating files::
+
+       Sleep(
+           data='/path/to/bids_root',
+           use_mne=True,
+           kwargs_mne={
+               'bids_entities': {'subject': '01', 'task': 'rest'},
+               'bids_resolve': 'first',
+           },
+       ).show()
+
+   ``bids_path`` accepts either an :class:`mne_bids.BIDSPath`, a mapping of
+   entities or a relative filename.  When multiple runs are available you can
+   set ``bids_resolve`` to ``"first"``, ``"last"`` or an index to select the
+   desired dataset explicitly.
+
 .. _loadfromraw:
 
 Load file from raw data
